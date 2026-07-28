@@ -1,13 +1,15 @@
 import express from "express";
-
 import { getAllUsers, updateUser, changeUserPassword, deleteUser, resetDatabase } from "../controllers/adminController.js";
+import { adminAuth } from "../middleware/adminAuth.js"
 
 const router = express.Router();
 
-router.get("/users/:adminId", getAllUsers);
-router.put("/users/:adminId/:userId", updateUser);
-router.put("/users/:adminId/:userId/password", changeUserPassword);
-router.delete("/users/:adminId/:userId", deleteUser);
-router.post("/reset-database/:adminId", resetDatabase);
+router.use(adminAuth);
+
+router.get("/users", getAllUsers);
+router.put("/users/:userId", updateUser);
+router.put("/users/:userId/password", changeUserPassword);
+router.delete("/users/:userId", deleteUser);
+router.post("/reset-database", resetDatabase);
 
 export default router;

@@ -15,7 +15,6 @@ export default function Meetups() {
     event_location: "",
     event_date: "",
     event_bio: "",
-    //event_creator: "",
   });
 
   useEffect(() => {
@@ -73,10 +72,8 @@ export default function Meetups() {
       });
 
       //const createdMeetup =
-      await response.json();
-
-//      setMeetups([...meetups, createdMeetup]);
-      fetchMeetups();
+      const createdMeetup = { ...(await response.json()), event_creator_name: user.name };
+      setMeetups([...meetups, createdMeetup]);
 
       setNewMeetup({
         event_name: "",
@@ -170,14 +167,6 @@ export default function Meetups() {
             value={newMeetup.event_bio}
             onChange={handleInputChange}
           />
-
-         {/*} <input
-            type="text"
-            name="event_creator"
-            placeholder="Creator"
-            value={newMeetup.event_creator}
-            onChange={handleInputChange}
-          />*/}
 
           <button type="submit">Create Meetup</button>
         </form>

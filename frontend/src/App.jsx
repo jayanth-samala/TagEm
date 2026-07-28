@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import Jobs from "./Jobs.jsx";
 import Meetups from "./Meetups.jsx";
@@ -34,10 +34,14 @@ function NavBar() {
         handleFetch();
     }, [location.pathname]); 
 
-    const handleLogout = () => {
-        localStorage.removeItem("user");
-        setLoggingOut(false);
-        navigate("/login");
+    const handleLogout = async () => {
+        try {
+            await fetch("http://localhost:5001/api/auth/logout", { method: "POST" });
+        } finally {
+            localStorage.removeItem("user");
+            setLoggingOut(false);
+            navigate("/login");
+        }
     };
 
     if (location.pathname === "/" || location.pathname === "/signup" || location.pathname === "/login") {
@@ -69,6 +73,15 @@ function NavBar() {
     );   
 }
 
+function ProtectedRoute({ adminOnly = false }) {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) return <Navigate to="/login" replace />;
+    if (adminOnly && !user.is_admin) return <Navigate to="/Profile" replace />;
+
+    return <Outlet />;
+}
+
 export default function App() {
     return (
         <BrowserRouter>
@@ -77,13 +90,17 @@ export default function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/Jobs" element={<Jobs />}/>
-                <Route path="/Meetups" element={<Meetups />}/>
-                <Route path="/Meetups/:id" element={<MeetupDetails />} />
-                <Route path="/Connections" element={<Connections />}/>
-                <Route path="/Profile" element={<Profile />}/>
-                <Route path="/Profile/:id" element={<Profile />}/>
-                <Route path="/Admin" element={<Admin />} />
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/Jobs" element={<Jobs />}/>
+                    <Route path="/Meetups" element={<Meetups />}/>
+                    <Route path="/Meetups/:id" element={<MeetupDetails />} />
+                    <Route path="/Connections" element={<Connections />}/>
+                    <Route path="/Profile" element={<Profile />}/>
+                    <Route path="/Profile/:id" element={<Profile />}/>
+                </Route>
+                <Route element={<ProtectedRoute adminOnly />}>
+                    <Route path="/Admin" element={<Admin />} />
+                </Route>
             </Routes>
         </BrowserRouter>
     );

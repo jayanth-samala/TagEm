@@ -9,20 +9,21 @@ function Login() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userParam = params.get("user");
-    if (userParam) {
+    async function restoreCookieSession() {
       try {
-        const user = JSON.parse(userParam);
+        const response = await fetch("http://localhost:5001/api/auth/me");
+        if (!response.ok) return;
+
+        const { user } = await response.json();
         localStorage.setItem("user", JSON.stringify(user));
-        window.history.replaceState({}, document.title, "/Profile");
-        window.location.href = "/Profile";
+        navigate("/Profile", { replace: true });
       } catch (err) {
-        console.error("Failed to parse Google user data", err);
-        setError("Google login failed. Please try again.");
+        console.error("Failed to restore session", err);
       }
     }
-  }, []); 
+
+    restoreCookieSession();
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -43,7 +44,7 @@ function Login() {
         setError(data.message || "Login failed");
         return;
       }
-      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/Profile");
     } catch(err) {
       console.log("Error sending data:", err);

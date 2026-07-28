@@ -5,6 +5,7 @@ export default function Jobs() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [jobs, setJobs] = useState([]);
+  const [jobsSent, setJobsSent] = useState([]);
   const [connections, setConnections] = useState([]);
   const [tags, setTags] = useState([]);
 
@@ -18,6 +19,7 @@ export default function Jobs() {
 
   useEffect(() => {
     loadJobs();
+    loadJobsSentByUser();
     loadOptions();
   }, []);
 
@@ -31,6 +33,18 @@ export default function Jobs() {
     }
 
     setJobs(data);
+  }
+
+  async function loadJobsSentByUser() {
+    const response = await fetch(`http://localhost:5001/api/jobs/jobsSentByUser/${user.id}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.log(data.message);
+      return;
+    }
+
+    setJobsSent(data);
   }
 
   async function loadOptions() {
@@ -174,7 +188,7 @@ export default function Jobs() {
           <button type="submit">Post and Share Job</button>
         </form>
       </section>
-
+  
       <section className="job-section">
         <h2>Job Postings Sent to You</h2>
 
@@ -203,6 +217,36 @@ export default function Jobs() {
                   {job.taggedContacts.join(", ")}
                 </p>
               )}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="job-section">
+        <h2>Job Postings Forwarded By You</h2>
+        <div className="job-list">
+          {jobsSent.map((job) => (
+            <article className="job-card" key={job.id}>
+              <h3>{job.title}</h3>
+
+              <p>
+                <strong>Company:</strong> {job.company}
+              </p>
+
+              <p>
+                <strong>Location:</strong> {job.location}
+              </p>
+
+              <p>{job.description}</p>
+
+              <p>
+                <strong>Sent by:</strong> {job.sender}
+              </p>
+              
+              <p>
+                <strong>Forwarded to:</strong>{" "}
+                {job.taggedContacts.join(", ")}
+              </p>
             </article>
           ))}
         </div>

@@ -22,7 +22,7 @@ async function checkAdmin(adminId, res) {
 
 export async function getAllUsers(req, res) {
   try {
-    const adminId = req.params.adminId;
+    const adminId = req.user.id;
 
     const allowed = await checkAdmin(adminId, res);
     if (!allowed) return;
@@ -43,7 +43,7 @@ export async function getAllUsers(req, res) {
 
 export async function updateUser(req, res) {
   try {
-    const adminId = req.params.adminId;
+    const adminId = req.user.id;
     const userId = req.params.userId;
 
     const allowed = await checkAdmin(adminId, res);
@@ -97,7 +97,7 @@ export async function updateUser(req, res) {
 
 export async function changeUserPassword(req, res) {
   try {
-    const adminId = req.params.adminId;
+    const adminId = req.user.id;
     const userId = req.params.userId;
     const newPassword = req.body.password;
 
@@ -133,7 +133,7 @@ export async function changeUserPassword(req, res) {
 
 export async function deleteUser(req, res) {
   try {
-    const adminId = req.params.adminId;
+    const adminId = req.user.id;
     const userId = req.params.userId;
 
     const allowed = await checkAdmin(adminId, res);
@@ -161,7 +161,7 @@ export async function deleteUser(req, res) {
 
 export async function resetDatabase(req, res) {
   try {
-    const adminId = req.params.adminId;
+    const adminId = req.user.id;
 
     const allowed = await checkAdmin(adminId, res);
     if (!allowed) return;

@@ -5,13 +5,7 @@ export default function Admin() {
   const [message, setMessage] = useState("");
 
   async function loadUsers() {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch("http://localhost:5001/api/admin/users", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch("http://localhost:5001/api/admin/users");
 
     const data = await response.json();
 
@@ -28,15 +22,12 @@ export default function Admin() {
   }, []);
 
   async function updateUser(user) {
-    const token = localStorage.getItem("token");
-
     const response = await fetch(
       `http://localhost:5001/api/admin/users/${user.id}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(user),
       }
@@ -48,15 +39,10 @@ export default function Admin() {
   }
 
   async function deleteUser(id) {
-    const token = localStorage.getItem("token");
-
     const response = await fetch(
       `http://localhost:5001/api/admin/users/${id}`,
       {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       }
     );
 
@@ -70,15 +56,12 @@ export default function Admin() {
 
     if (!password) return;
 
-    const token = localStorage.getItem("token");
-
     const response = await fetch(
       `http://localhost:5001/api/admin/users/${id}/password`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ password }),
       }
@@ -95,15 +78,10 @@ export default function Admin() {
 
     if (!confirmed) return;
 
-    const token = localStorage.getItem("token");
-
     const response = await fetch(
       "http://localhost:5001/api/admin/reset-database",
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       }
     );
 

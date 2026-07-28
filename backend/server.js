@@ -11,17 +11,24 @@ import meetupsRouter from "./routes/meetupsRoutes.js";
 import passport from "passport";
 import adminRoutes from "./routes/adminRoutes.js";
 import jobsRouter from "./routes/jobsRoutes.js";
+import { authenticateToken } from "./middleware/auth.js";
+import { csrfProtection } from "./middleware/csrf.js";
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 app.use(passport.initialize());
 
-app.use("/api/users", Router);
 app.use("/api/auth", authRouter);
+app.use("/api", authenticateToken);
+app.use("/api", csrfProtection);
+app.use("/api/users", Router);
 app.use("/api/getUsers", connectionRouter);
 app.use("/api/Profile", profileRouter);
 app.use("/uploads", express.static("uploads"));

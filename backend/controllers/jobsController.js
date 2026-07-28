@@ -14,19 +14,15 @@ export async function getJobsForUser(req, res) {
         j.sender_id,
         sender.name AS sender,
         j.created_at,
-        COALESCE(
-          ARRAY_AGG(recipient.name) FILTER (WHERE recipient.name IS NOT NULL),
-          '{}'
-        ) AS "taggedContacts"
+        ARRAY_AGG(recipient.name) AS "taggedContacts"
       FROM jobs j
       JOIN users sender
         ON j.sender_id = sender.id
-      LEFT JOIN job_recipients jr
+      JOIN job_recipients jr
         ON j.id = jr.job_id
-      LEFT JOIN users recipient
+      JOIN users recipient
         ON jr.recipient_id = recipient.id
-      WHERE j.sender_id = $1
-         OR j.id IN (
+      WHERE j.id IN (
            SELECT job_id
            FROM job_recipients
            WHERE recipient_id = $1
@@ -42,6 +38,42 @@ export async function getJobsForUser(req, res) {
     res.status(500).json({ message: "Database error getting jobs" });
   }
 }
+
+export async function getJobsSentByUser(req, res) {
+  try {
+    const userId = req.params.userId;
+    const jobs = await pool.query(
+      `
+      SELECT 
+        j.id,
+        j.title,
+        j.company,
+        j.location,
+        j.description,
+        j.sender_id,
+        sender.name AS sender,
+        j.created_at,
+        ARRAY_AGG(recipient.name) AS "taggedContacts"
+      FROM jobs j
+      JOIN users sender
+        ON j.sender_id = sender.id
+      JOIN job_recipients jr
+        ON j.id = jr.job_id
+      JOIN users recipient
+        ON jr.recipient_id = recipient.id
+      WHERE j.sender_id = $1
+      GROUP BY j.id, sender.name
+      ORDER BY j.created_at DESC
+      `,
+      [userId]
+    );
+    res.json(jobs.rows);
+  }
+  catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Database error getting jobs" });
+  }
+} 
 
 export async function createJob(req, res) {
   try {
