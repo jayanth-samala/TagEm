@@ -1,8 +1,10 @@
 import pool from "../config/db.js";
+import { cleanString } from "../utils/validation.js";
 
 export async function getJobsForUser(req, res) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
+    if (Number(req.params.userId) !== userId) return res.status(403).json({ message: "Access denied" });
     const jobs = await pool.query(
       `
       SELECT 
@@ -41,7 +43,8 @@ export async function getJobsForUser(req, res) {
 
 export async function getJobsSentByUser(req, res) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
+    if (Number(req.params.userId) !== userId) return res.status(403).json({ message: "Access denied" });
     const jobs = await pool.query(
       `
       SELECT 
@@ -82,12 +85,16 @@ export async function createJob(req, res) {
       company,
       location,
       description,
-      sender_id,
       selectedUserIds,
       selectedTagTypes,
     } = req.body;
 
-    if (!title || !company || !location || !description || !sender_id) {
+    const sender_id = req.user.id;
+    const safeTitle = cleanString(title, { max: 255 });
+    const safeCompany = cleanString(company, { max: 255 });
+    const safeLocation = cleanString(location, { max: 255 });
+    const safeDescription = cleanString(description, { max: 5000 });
+    if (!safeTitle || !safeCompany || !safeLocation || !safeDescription) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     await pool.query("BEGIN");
@@ -98,14 +105,15 @@ export async function createJob(req, res) {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
       `,
-      [title, company, location, description, sender_id]
+      [safeTitle, safeCompany, safeLocation, safeDescription, sender_id]
     );
     const jobId = newJob.rows[0].id;
     const recipients = new Set();
 
     if (selectedUserIds && selectedUserIds.length > 0) {
       for (let i = 0; i < selectedUserIds.length; i++) {
-        recipients.add(Number(selectedUserIds[i]));
+        const recipientId = Number(selectedUserIds[i]);
+        if (Number.isInteger(recipientId) && recipientId > 0) recipients.add(recipientId);
       }
     }
     if (selectedTagTypes && selectedTagTypes.length > 0) {
@@ -130,10 +138,14 @@ export async function createJob(req, res) {
       await pool.query(
         `
         INSERT INTO job_recipients (job_id, recipient_id)
-        VALUES ($1, $2)
+        SELECT $1, $2
+        WHERE EXISTS (
+          SELECT 1 FROM connections
+          WHERE (user1_id = $3 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $3)
+        )
         ON CONFLICT DO NOTHING
         `,
-        [jobId, recipientId]
+        [jobId, recipientId, sender_id]
       );
     }
 
@@ -149,7 +161,8 @@ export async function createJob(req, res) {
 
 export async function getJobSendOptions(req, res) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
+    if (Number(req.params.userId) !== userId) return res.status(403).json({ message: "Access denied" });
     const connections = await pool.query(
       `
       SELECT 
@@ -195,14 +208,20 @@ export async function getJobSendOptions(req, res) {
 
 export async function setConnectionTag(req, res) {
   try {
-    const { owner_id, connection_user_id, tag_type } = req.body;
+    const owner_id = req.user.id;
+    const { connection_user_id } = req.body;
+    const tag_type = cleanString(req.body.tag_type, { max: 255 });
 
     if (!owner_id || !connection_user_id || !tag_type) {
       return res.status(400).json({ message: "Missing required fields" });
     }
     await pool.query(
       `INSERT INTO connection_tags (owner_id, connection_user_id, tag_type)
-      VALUES ($1, $2, $3)
+      SELECT $1, $2, $3
+      WHERE EXISTS (
+        SELECT 1 FROM connections
+        WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+      )
       ON CONFLICT DO NOTHING
       `,
       [owner_id, connection_user_id, tag_type]
@@ -217,7 +236,9 @@ export async function setConnectionTag(req, res) {
 
 export async function deleteConnectionTag(req, res) {
   try {
-    const { ownerId, connectionUserId, tagType } = req.params;
+    const { connectionUserId, tagType } = req.params;
+    const ownerId = req.user.id;
+    if (Number(req.params.ownerId) !== ownerId) return res.status(403).json({ message: "Access denied" });
 
     await pool.query(
       `
@@ -242,10 +263,10 @@ export async function deleteJob(req, res) {
     const deletedJob = await pool.query(
       `
       DELETE FROM jobs
-      WHERE id = $1
+      WHERE id = $1 AND sender_id = $2
       RETURNING id
       `,
-      [jobId]
+      [jobId, req.user.id]
     );
     if (deletedJob.rows.length === 0) {
       return res.status(404).json({ message: "Job not found" });

@@ -8,12 +8,13 @@ function isProduction() {
 }
 
 function sameSite() {
-  return process.env.COOKIE_SAME_SITE || "lax";
+  const configured = (process.env.COOKIE_SAME_SITE || "lax").toLowerCase();
+  return new Set(["strict", "lax", "none"]).has(configured) ? configured : "lax";
 }
 
 function baseCookieOptions() {
   return {
-    secure: isProduction(),
+    secure: isProduction() || sameSite() === "none",
     sameSite: sameSite(),
     path: "/",
   };

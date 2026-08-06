@@ -5,11 +5,15 @@ import { createToken } from "../utils/createToken.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { csrfProtection } from "../middleware/csrf.js";
 import { clearAuthCookies, setAuthCookies } from "../utils/authCookies.js";
+import { rateLimit } from "../middleware/security.js";
+import pool from "../config/db.js";
 
 const router = express.Router();
 
-router.post("/signup", createUser);
-router.post("/login", passport.authenticate("local", {session: false}), (req,res)=>{
+const authRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: "auth" });
+
+router.post("/signup", authRateLimit, createUser);
+router.post("/login", authRateLimit, passport.authenticate("local", {session: false}), (req,res)=>{
     setAuthCookies(res, createToken(req.user));
     res.json({
         user: {
@@ -23,7 +27,10 @@ router.post("/login", passport.authenticate("local", {session: false}), (req,res
 });
 
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-router.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/login" }), (req, res) => {
+router.get("/google/callback", passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?oauth=failed`,
+}), (req, res) => {
     setAuthCookies(res, createToken(req.user));
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     res.redirect(`${frontendUrl}/login?oauth=success`);
@@ -33,8 +40,14 @@ router.get("/me", authenticateToken, (req, res) => {
     res.json({ user: req.user });
 });
 
-router.post("/logout", authenticateToken, csrfProtection, (req, res) => {
-    clearAuthCookies(res);
-    res.json({ message: "Logged out" });
+router.post("/logout", authenticateToken, csrfProtection, async (req, res) => {
+    try {
+        await pool.query("UPDATE users SET auth_token_version = auth_token_version + 1 WHERE id = $1", [req.user.id]);
+        clearAuthCookies(res);
+        res.json({ message: "Logged out" });
+    } catch (error) {
+        console.error("Logout error:", error);
+        res.status(500).json({ message: "Unable to log out" });
+    }
 });
 export default router;

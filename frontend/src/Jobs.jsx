@@ -92,7 +92,6 @@ export default function Jobs() {
         company,
         location,
         description,
-        sender_id: user.id,
         selectedUserIds,
         selectedTagTypes,
       }),

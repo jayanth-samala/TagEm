@@ -148,7 +148,6 @@ function Connections() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            owner_id: user.id,
             connection_user_id: connectionId,
             tag_type: tagType,
           }),

@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { cleanString } from "../utils/validation.js";
 
 export async function getMeetups(req, res) {
   try {
@@ -71,8 +72,13 @@ export async function createMeetup(req, res) {
     event_location,
     event_date,
     event_bio,
-    event_creator_id,
   } = req.body;
+  const safeName = cleanString(event_name, { max: 100 });
+  const safeLocation = cleanString(event_location, { max: 100 });
+  const safeBio = cleanString(event_bio || "", { min: 0, max: 2000 });
+  if (!safeName || !safeLocation || !/^\d{4}-\d{2}-\d{2}$/.test(event_date || "")) {
+    return res.status(400).json({ error: "Invalid meetup details" });
+  }
   try {
     const result = await pool.query(
       `INSERT INTO meetups 
@@ -80,7 +86,7 @@ export async function createMeetup(req, res) {
        VALUES 
         ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [event_name, event_location, event_date, event_bio, event_creator_id]
+      [safeName, safeLocation, event_date, safeBio, req.user.id]
     );
 
     res.status(201).json(result.rows[0]);
@@ -97,8 +103,13 @@ export async function updateMeetup(req, res) {
     event_location,
     event_date,
     event_bio,
-    event_creator_id,
   } = req.body;
+  const safeName = cleanString(event_name, { max: 100 });
+  const safeLocation = cleanString(event_location, { max: 100 });
+  const safeBio = cleanString(event_bio || "", { min: 0, max: 2000 });
+  if (!safeName || !safeLocation || !/^\d{4}-\d{2}-\d{2}$/.test(event_date || "")) {
+    return res.status(400).json({ error: "Invalid meetup details" });
+  }
   try {
     const result = await pool.query(
       `UPDATE meetups
@@ -106,11 +117,10 @@ export async function updateMeetup(req, res) {
         event_name = $1,
         event_location = $2,
         event_date = $3,
-        event_bio = $4,
-        event_creator_id = $5
-       WHERE id = $6
+        event_bio = $4
+       WHERE id = $5 AND event_creator_id = $6
        RETURNING *`,
-      [event_name, event_location, event_date, event_bio, event_creator_id, id]
+      [safeName, safeLocation, event_date, safeBio, id, req.user.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Meetup not found" });
@@ -126,8 +136,8 @@ export async function deleteMeetup(req, res) {
   const { id } = req.params;
   try {
     const result = await pool.query(
-      "DELETE FROM meetups WHERE id = $1 RETURNING *",
-      [id]
+      "DELETE FROM meetups WHERE id = $1 AND event_creator_id = $2 RETURNING id",
+      [id, req.user.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Meetup not found" });

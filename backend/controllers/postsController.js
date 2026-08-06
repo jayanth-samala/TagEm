@@ -1,8 +1,11 @@
 import pool from "../config/db.js";
+import { cleanString } from "../utils/validation.js";
 
 export async function createPosts(req, res) {
     try {
-        const {user_id, content,parent_post_id} = req.body;
+        const user_id = req.user.id;
+        const content = cleanString(req.body.content, { max: 5000 });
+        const parent_post_id = req.body.parent_post_id || null;
         if (!content) {
             return res.status(400).json({ message: "Content cannot be empty" });
         }

@@ -8,7 +8,10 @@ passport.use(new LocalStrategy ({
       usernameField: "email", passwordField: "password"
     },(async function verify(user_email, user_password, cb) {
     try{
-        const result = await pool.query("SELECT * FROM users WHERE email = $1", [user_email]);
+        const result = await pool.query(
+          `SELECT id, name, email, password, is_admin, "profilePicUrl", auth_token_version
+           FROM users WHERE email = $1`, [user_email]
+        );
         if(result.rows.length === 0) {
             return cb(null, false, { message: 'Incorrect username or password.' });
         }
@@ -42,7 +45,10 @@ passport.use(
         const name = profile.displayName;
         const picture = profile.photos && profile.photos.length > 0 ? profile.photos[0].value : null;
 
-        const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+        const result = await pool.query(
+          `SELECT id, name, email, is_admin, "profilePicUrl", auth_token_version
+           FROM users WHERE email = $1`, [email]
+        );
         
         if (result.rows.length > 0) {
           return done(null, result.rows[0]);
@@ -61,4 +67,3 @@ passport.use(
 );
 
 export default passport;
-

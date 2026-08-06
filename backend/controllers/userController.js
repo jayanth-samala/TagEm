@@ -2,8 +2,7 @@ import pool from "../config/db.js"
 
 export async function getUsers(req, res) {
     try {
-        const users = await pool.query('SELECT * from users');
-        console.log(users.rows);
+        const users = await pool.query('SELECT id, name, email, "profilePicUrl", occupation, bio FROM users ORDER BY name');
         res.json(users.rows);
         
     } catch(err) {
@@ -14,7 +13,11 @@ export async function getUsers(req, res) {
 export async function getUserProfile(req, res) {
     try {
         const userId = req.params.id; 
-        const result = await pool.query("SELECT id, name, email, genderIdentity, occupation, bio, resumeAttached, profilePicUrl FROM users WHERE id = $1", [userId]);
+        const includeResume = Number(userId) === req.user.id || req.user.is_admin;
+        const result = await pool.query(
+          `SELECT id, name, email, "genderIdentity", occupation, bio, "profilePicUrl"${includeResume ? ", resumeattached" : ""}
+           FROM users WHERE id = $1`, [userId]
+        );
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -22,11 +25,11 @@ export async function getUserProfile(req, res) {
         const profileData = {
             name: user.name,
             email: user.email,
-            genderIdentity: user.genderidentity,
+            genderIdentity: user.genderIdentity,
             occupation: user.occupation,
             bio: user.bio,
-            resumeAttached: user.resumeattached,
-            profilePicUrl: user.profilepicurl,
+            ...(includeResume ? { resumeAttached: user.resumeattached } : {}),
+            profilePicUrl: user.profilePicUrl,
             networkConnections: 124
         };
         return res.status(200).json(profileData);

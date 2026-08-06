@@ -1,5 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { isStrongPassword } from "../utils/validation.js";
 
 async function checkAdmin(adminId, res) {
   const admin = await pool.query(
@@ -104,8 +106,8 @@ export async function changeUserPassword(req, res) {
     const allowed = await checkAdmin(adminId, res);
     if (!allowed) return;
 
-    if (!newPassword) {
-      return res.status(400).json({ message: "Password is required" });
+    if (!isStrongPassword(newPassword)) {
+      return res.status(400).json({ message: "Password must be 12–128 characters with uppercase, lowercase, number, and symbol" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -113,7 +115,8 @@ export async function changeUserPassword(req, res) {
     const updatedUser = await pool.query(
       `
       UPDATE users
-      SET password = $1
+      SET password = $1,
+          auth_token_version = auth_token_version + 1
       WHERE id = $2
       RETURNING id
       `,
@@ -172,7 +175,8 @@ export async function resetDatabase(req, res) {
     await pool.query(`DELETE FROM "connectionRequests"`);
     await pool.query(`DELETE FROM users`);
 
-    const password = await bcrypt.hash("password123", 10);
+    const temporaryPassword = `${crypto.randomBytes(18).toString("base64url")}Aa1!`;
+    const password = await bcrypt.hash(temporaryPassword, 10);
 
     await pool.query(
       `
@@ -189,7 +193,7 @@ export async function resetDatabase(req, res) {
 
     await pool.query("COMMIT");
 
-    res.json({ message: "Database reset and repopulated" });
+    res.json({ message: "Database reset and repopulated", temporaryAdminPassword: temporaryPassword });
   } catch (err) {
     await pool.query("ROLLBACK");
     console.log(err);

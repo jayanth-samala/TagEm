@@ -1,7 +1,6 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-import bcrypt from "bcrypt";
 export const shorthands = undefined;
 
 /**
@@ -53,12 +52,6 @@ export const up = async (pgm) => {
       default: false,
     }
   });
-  const password = await bcrypt.hash("password123", 10);
-
-  pgm.sql(
-    `INSERT INTO users (name, email, password, is_admin)
-     VALUES ('Admin User', 'admin@test.com', '${password}', true)`
-  );
 };
 
 /**

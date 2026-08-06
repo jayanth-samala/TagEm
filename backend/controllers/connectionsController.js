@@ -2,14 +2,14 @@ import pool from "../config/db.js"
 
 export async function getUsers(req, res) {
     try {
-        const users = await pool.query('SELECT id, name, email, "profilePicUrl" from users');
-        const people = [];
-      for(let i = 0; i < users.rows.length; i++) {
-        if(users.rows[i].name.toLowerCase().startsWith(req.query.search.toLowerCase()) && req.query.search.length != 0) {
-          people.push(users.rows[i]);
-        }
-      }
-      res.send(people);
+      const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+      if (!search || search.length > 100) return res.json([]);
+      const users = await pool.query(
+        `SELECT id, name, email, "profilePicUrl" FROM users
+         WHERE name ILIKE $1 AND id <> $2 ORDER BY name LIMIT 25`,
+        [`${search}%`, req.user.id]
+      );
+      res.send(users.rows);
         
     } catch(err) {
         console.log(err);
@@ -19,7 +19,9 @@ export async function getUsers(req, res) {
 
 export async function sendRequest(req, res) {
   try{
-    const {sender_id, receiver_id} = req.body;
+    const sender_id = req.user.id;
+    const receiver_id = Number(req.body.receiver_id);
+    if (!Number.isInteger(receiver_id) || receiver_id <= 0) return res.status(400).json({ message: "Invalid receiver" });
     if (sender_id === receiver_id) {
       return res.status(400).json({ message: "You cannot connect with yourself" });
     }
@@ -38,7 +40,8 @@ export async function sendRequest(req, res) {
 
 export async function getRequests(req, res) {
   try {
-    const id = req.params.id;
+    const id = req.user.id;
+    if (Number(req.params.id) !== id) return res.status(403).json({ message: "Access denied" });
 
     const requests = await pool.query(
       `SELECT
@@ -69,8 +72,8 @@ export async function acceptRequest(req, res) {
         const request = await pool.query(
             `SELECT sender_id, receiver_id
              FROM "connectionRequests"
-             WHERE id = $1`,
-            [requestId]
+             WHERE id = $1 AND receiver_id = $2`,
+            [requestId, req.user.id]
         );
 
         if (request.rows.length === 0) {
@@ -84,8 +87,8 @@ export async function acceptRequest(req, res) {
         await pool.query(
             `UPDATE "connectionRequests"
              SET status = 'accepted'
-             WHERE id = $1`,
-            [requestId]
+             WHERE id = $1 AND receiver_id = $2`,
+            [requestId, req.user.id]
         );
 
         const user1 = Math.min(sender_id, receiver_id);
@@ -114,11 +117,14 @@ export async function rejectRequest(req, res) {
     try {
         const requestId = req.params.id;
 
-        await pool.query(
+        const deleted = await pool.query(
             `DELETE FROM "connectionRequests"
-             WHERE id = $1`,
-            [requestId]
+             WHERE id = $1 AND receiver_id = $2
+             RETURNING id`,
+            [requestId, req.user.id]
         );
+
+        if (deleted.rows.length === 0) return res.status(404).json({ message: "Request not found" });
 
         return res.status(200).json({
             message: "Request rejected"
@@ -134,15 +140,18 @@ export async function rejectRequest(req, res) {
 
 export async function getConnectionStatus(req, res) {
   try {
-    const { senderId, receiverId } = req.params;
+    const senderId = req.user.id;
+    const receiverId = Number(req.params.receiverId);
+    if (Number(req.params.senderId) !== senderId || !Number.isInteger(receiverId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const request = await pool.query(
       `SELECT status
        FROM "connectionRequests"
        WHERE 
        (sender_id = $1 AND receiver_id = $2)
-       OR
-       (sender_id = $2 AND receiver_id = $1)`,
+       OR (sender_id = $2 AND receiver_id = $1)`,
       [senderId, receiverId]
     );
 
@@ -158,7 +167,7 @@ export async function getConnectionStatus(req, res) {
     const user2 = Math.max(Number(senderId), Number(receiverId));
 
     const connection = await pool.query(
-      `SELECT *
+      `SELECT id
        FROM connections
        WHERE user1_id = $1 AND user2_id = $2`,
       [user1, user2]
@@ -178,7 +187,8 @@ export async function getConnectionStatus(req, res) {
 
 export async function getConnections(req, res) {
   try {
-    const id = req.params.id;
+    const id = Number(req.params.id);
+    const includePrivateTags = id === req.user.id || req.user.is_admin;
 
     const result = await pool.query(
       `SELECT 
@@ -186,7 +196,7 @@ export async function getConnections(req, res) {
         u.name,
         u.email,
         u."profilePicUrl",
-        ct.tag_type
+        ${includePrivateTags ? "ct.tag_type" : "NULL AS tag_type"}
       FROM connections c
       JOIN users u
       ON u.id = CASE

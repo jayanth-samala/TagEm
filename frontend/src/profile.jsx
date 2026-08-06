@@ -224,7 +224,6 @@ console.error("Error liking post:", err);
                 "Content-Type": "application/json"
             },
         body: JSON.stringify({
-            user_id: user.id,
             content: commentText,
             parent_post_id: postId
         })
@@ -253,7 +252,6 @@ console.error("Error liking post:", err);
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    sender_id: user.id,
                     receiver_id: profileId
                 })
             });
@@ -285,7 +283,6 @@ console.error("Error liking post:", err);
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    user_id: user.id,
                     content: postContent,
                     parent_post_id: null // Head post
                 })
@@ -438,9 +435,9 @@ console.error("Error liking post:", err);
                             name="resume"
                             onChange={(e) => setResume(e.target.files[0])}
                             className="edit-input"
-                            accept=".pdf,.doc,.docx"
+                            accept="application/pdf,.pdf"
                         />
-                    ) : (
+                    ) : profile.resumeattached ? (
                         <p className="resume-text">
                             <a 
                                 href={`http://localhost:5001${profile.resumeattached}`}
@@ -449,14 +446,7 @@ console.error("Error liking post:", err);
                                 Resume
                             </a>
                         </p>
-                    )) : (<p className="resume-text">
-                        <a
-                            href={`http://localhost:5001${profile.resumeattached}`}
-                            target="_blank"
-                        >
-                            Resume
-                        </a>
-                    </p>)}
+                    ) : <p className="resume-text">No resume uploaded</p>) : null}
                 </section>
                 <section className="profile-section">
                     <div className="section-header">

@@ -38,7 +38,8 @@ function Signup() {
         setMessage("Account created successfully!");
         navigate(`/login`)
       } else {
-        throw new Error(data.message || "Failed to create account");
+        setMessage(data.message || "Failed to create account");
+        return;
       }
     } catch(err) {
       console.log('Error sending data:', err);
@@ -73,6 +74,9 @@ function Signup() {
             type="password"
             placeholder="Create a password"
             value={password}
+            minLength={12}
+            maxLength={128}
+            title="Use uppercase, lowercase, a number, and a symbol"
             onChange={(e) => setPassword(e.target.value)}
           />
 

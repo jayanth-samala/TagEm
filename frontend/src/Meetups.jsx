@@ -65,14 +65,12 @@ export default function Meetups() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-           ...newMeetup,
-           event_creator_id: user.id 
-        }),
+        body: JSON.stringify(newMeetup),
       });
 
-      //const createdMeetup =
-      const createdMeetup = { ...(await response.json()), event_creator_name: user.name };
+      const responseData = await response.json();
+      if (!response.ok) throw new Error(responseData.error || "Failed to create meetup");
+      const createdMeetup = { ...responseData, event_creator_name: user.name };
       setMeetups([...meetups, createdMeetup]);
 
       setNewMeetup({

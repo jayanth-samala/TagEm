@@ -1,15 +1,16 @@
 import pool from "../config/db.js"
 import bcrypt from "bcrypt"
+import { cleanString, isStrongPassword } from "../utils/validation.js";
 
 export async function createUser(req, res) {
     try {
-        const user_name = req.body.name;
-        const user_email = req.body.email;
+        const user_name = cleanString(req.body.name, { min: 2, max: 100 });
+        const user_email = cleanString(req.body.email, { min: 3, max: 255 })?.toLowerCase();
         const user_password = req.body.password;
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(user_name && user_password && user_email && emailRegex.test(user_email)){
-            const result = await pool.query("SELECT * FROM users WHERE email = $1", [user_email]);
+        if(user_name && isStrongPassword(user_password) && user_email && emailRegex.test(user_email)){
+            const result = await pool.query("SELECT id FROM users WHERE email = $1", [user_email]);
             if(result.rows.length === 0) {
                 const hashed_password = await bcrypt.hash(user_password, 10);
                 await pool.query("INSERT INTO users(name, email, password) VALUES($1, $2, $3)",
@@ -20,7 +21,7 @@ export async function createUser(req, res) {
                 return res.status(409).json({message: "Email already exists"});
             }
         } else {
-            return res.status(400).json({message: "Please provide a valid name, email, and password"});
+            return res.status(400).json({message: "Use a valid name and email, and a 12–128 character password containing uppercase, lowercase, number, and symbol"});
         }
         
     } catch(err) {
