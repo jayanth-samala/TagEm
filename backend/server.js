@@ -72,6 +72,10 @@ app.use("/api/jobs", jobsRouter);
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log(`Server running on Port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running on Port ${PORT}`);
+  });
+}
+
+export default app;

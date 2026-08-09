@@ -4,10 +4,15 @@ import './main.css'
 import App from './App.jsx'
 
 const nativeFetch = window.fetch.bind(window);
+const developmentApiOrigin = "http://localhost:5001";
+const apiOrigin = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? developmentApiOrigin : "");
 
 window.fetch = async (resource, options = {}) => {
   const url = typeof resource === "string" ? resource : resource.url;
-  const isApiRequest = url.startsWith("http://localhost:5001/api/");
+  const requestUrl = url.startsWith(developmentApiOrigin)
+    ? `${apiOrigin}${url.slice(developmentApiOrigin.length)}`
+    : url;
+  const isApiRequest = requestUrl.startsWith("/api/") || requestUrl.startsWith(`${apiOrigin}/api/`);
 
   if (!isApiRequest) {
     return nativeFetch(resource, options);
@@ -26,7 +31,7 @@ window.fetch = async (resource, options = {}) => {
     headers.set("X-CSRF-Token", decodeURIComponent(csrfToken));
   }
 
-  const response = await nativeFetch(resource, {
+  const response = await nativeFetch(requestUrl, {
     ...options,
     headers,
     credentials: "include",

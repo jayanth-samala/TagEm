@@ -440,7 +440,7 @@ console.error("Error liking post:", err);
                     ) : profile.resumeattached ? (
                         <p className="resume-text">
                             <a 
-                                href={`http://localhost:5001${profile.resumeattached}`}
+                                href={`${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5001" : "")}${profile.resumeattached}`}
                                 target="_blank"
                             >
                                 Resume

@@ -52,7 +52,10 @@ function Login() {
     }
   }
   
-  const handleGoogleLogin = () => {window.location.href = "http://localhost:5001/api/auth/google";};
+  const handleGoogleLogin = () => {
+    const apiOrigin = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5001" : "");
+    window.location.href = `${apiOrigin}/api/auth/google`;
+  };
 
   return (
     <div className="auth-page">
