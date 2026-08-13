@@ -43,9 +43,25 @@ cd backend
 DATABASE_URL='<production URL>' NODE_ENV=production npm run migrate:up
 ```
 
-Run this deliberately: the security migration revokes old sessions and disables
-the historic administrator account with the shared default password. Promote a
-trusted account directly in PostgreSQL after signup.
+Run this deliberately: the security migration adds the token version used for
+session revocation. Promote a trusted account directly in PostgreSQL after signup.
+
+The identity hardening migration binds Google accounts to Google's stable subject
+identifier and adds one-like-per-user records. Existing password accounts are not
+automatically linked to Google accounts with the same email; account linking must
+be implemented as an explicit authenticated flow if it is needed later.
+
+The exclusive-auth-provider constraint is initially added as `NOT VALID` so legacy
+Google accounts can bind their Google subject on their next login. It still rejects
+all new or updated rows that have both authentication methods or neither method.
+After all legacy Google accounts have signed in, inspect remaining rows and validate:
+
+```sql
+SELECT id, email FROM users
+WHERE password IS NULL AND google_subject IS NULL;
+
+ALTER TABLE users VALIDATE CONSTRAINT users_exactly_one_auth_provider;
+```
 
 ## Google OAuth
 

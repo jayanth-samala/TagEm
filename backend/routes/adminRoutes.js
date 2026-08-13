@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllUsers, updateUser, changeUserPassword, deleteUser, resetDatabase } from "../controllers/adminController.js";
+import { getAllUsers, updateUser, changeUserPassword, deleteUser } from "../controllers/adminController.js";
 import { adminAuth } from "../middleware/adminAuth.js"
 
 const router = express.Router();
@@ -10,6 +10,5 @@ router.get("/users", getAllUsers);
 router.put("/users/:userId", updateUser);
 router.put("/users/:userId/password", changeUserPassword);
 router.delete("/users/:userId", deleteUser);
-router.post("/reset-database", resetDatabase);
 
 export default router;

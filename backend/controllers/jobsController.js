@@ -172,7 +172,6 @@ export async function getJobSendOptions(req, res) {
       SELECT 
         u.id,
         u.name,
-        u.email,
         u."profilePicUrl",
         ct.tag_type
       FROM connections c

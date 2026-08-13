@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Readable } from "stream";
-import { get, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
 
 const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../uploads");
 
@@ -54,4 +54,19 @@ export async function sendStoredFile(res, reference) {
       reject(error);
     });
   });
+}
+
+export async function deleteStoredFile(reference) {
+  if (reference?.startsWith("blob:")) {
+    await del(reference.slice(5));
+    return;
+  }
+  if (typeof reference !== "string" || !reference.startsWith("/uploads/")) return;
+  const filename = path.basename(reference);
+  if (!filename) return;
+  try {
+    await fs.unlink(path.join(uploadsDirectory, filename));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
 }

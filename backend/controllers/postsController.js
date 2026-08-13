@@ -66,16 +66,40 @@ export async function getPostsById(req, res) {
     }
 }
 export async function likePost(req, res) {
+    let client;
     try {
         const postId = req.params.id;
-        const result = await pool.query(
-            'UPDATE posts SET likes_count = likes_count + 1 WHERE id = $1 RETURNING *', [postId]
+        client = await pool.connect();
+        await client.query("BEGIN");
+        const inserted = await client.query(
+            `INSERT INTO post_likes (post_id, user_id)
+             SELECT id, $2 FROM posts WHERE id = $1
+             ON CONFLICT DO NOTHING
+             RETURNING post_id`,
+            [postId, req.user.id]
         );
-        if (result.rows.length===0) return res.status(404).json({message: "Post not found"});
-     res.status(200).json(result.rows[0]);
+        const post = await client.query(
+            `UPDATE posts
+             SET likes_count = (SELECT COUNT(*) FROM post_likes WHERE post_id = $1)
+             WHERE id = $1
+             RETURNING *`,
+            [postId]
+        );
+        if (post.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ message: "Post not found" });
+        }
+        await client.query("COMMIT");
+        res.status(inserted.rows.length ? 200 : 409).json({
+            ...post.rows[0],
+            message: inserted.rows.length ? "Post liked" : "You already liked this post",
+        });
     } catch (err) {
+        if (client) await client.query("ROLLBACK");
         console.error(err);
         res.status(500).json({ message: "Internal Server Error"})
+    } finally {
+        client?.release();
     }
 
 }

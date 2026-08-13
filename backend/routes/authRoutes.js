@@ -1,10 +1,18 @@
 import express from "express";
+import crypto from "crypto";
 import {createUser} from "../controllers/authController.js"
 import passport from "../config/passport.js"
 import { createToken } from "../utils/createToken.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { csrfProtection } from "../middleware/csrf.js";
-import { clearAuthCookies, setAuthCookies } from "../utils/authCookies.js";
+import {
+    clearAuthCookies,
+    clearOAuthStateCookie,
+    OAUTH_STATE_COOKIE_NAME,
+    parseCookies,
+    setAuthCookies,
+    setOAuthStateCookie,
+} from "../utils/authCookies.js";
 import { rateLimit } from "../middleware/security.js";
 import pool from "../config/db.js";
 
@@ -26,8 +34,26 @@ router.post("/login", authRateLimit, passport.authenticate("local", {session: fa
     });
 });
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-router.get("/google/callback", passport.authenticate("google", {
+router.get("/google", (req, res, next) => {
+    const state = crypto.randomBytes(32).toString("hex");
+    setOAuthStateCookie(res, state);
+    passport.authenticate("google", { scope: ["profile", "email"], state })(req, res, next);
+});
+
+function validateOAuthState(req, res, next) {
+    const expected = parseCookies(req)[OAUTH_STATE_COOKIE_NAME];
+    const received = typeof req.query.state === "string" ? req.query.state : "";
+    clearOAuthStateCookie(res);
+    if (!expected || !received) return res.status(400).json({ message: "Invalid OAuth state" });
+    const expectedBuffer = Buffer.from(expected);
+    const receivedBuffer = Buffer.from(received);
+    if (expectedBuffer.length !== receivedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
+        return res.status(400).json({ message: "Invalid OAuth state" });
+    }
+    next();
+}
+
+router.get("/google/callback", validateOAuthState, passport.authenticate("google", {
     session: false,
     failureRedirect: `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?oauth=failed`,
 }), (req, res) => {

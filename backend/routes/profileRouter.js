@@ -3,8 +3,15 @@ import {updateProfile, showProfile} from "../controllers/profileController.js";
 import multer from "multer";
 import { sendProfileFile } from "../controllers/profileController.js";
 import { isResourceOwner } from "../utils/authorization.js";
+import { rateLimit } from "../middleware/security.js";
 
 const router = express.Router();
+const uploadRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyPrefix: "profile-upload",
+  keyGenerator: (req) => req.user?.id || req.ip,
+});
 const upload = multer({
   storage: multer.memoryStorage(),
   // Stay below Vercel Functions' 4.5 MB request limit, including multipart overhead.
@@ -47,7 +54,7 @@ async function verifyFileSignatures(req, res, next) {
   }
 }
 
-router.put("/:id", requireSelf, upload.fields([
+router.put("/:id", requireSelf, uploadRateLimit, upload.fields([
     { name: "image", maxCount: 1 },
     { name: "resume", maxCount: 1 }
   ]), verifyFileSignatures, updateProfile);

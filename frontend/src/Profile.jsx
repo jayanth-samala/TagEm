@@ -151,8 +151,9 @@ const ProfilePage = () => {
         try {
             const response = await fetch(`http://localhost:5001/api/posts/${postId}/like`, {method: 'PUT'});
         if (response.ok){
+                const updatedPost = await response.json();
                 setTagEms(prevPosts => prevPosts.map(post => 
-                        post.id === postId ? {...post, likes_count: (post.likes_count || post.likes || 0) + 1} : post
+                        post.id === postId ? {...post, likes_count: updatedPost.likes_count} : post
                     ));
             }
         }

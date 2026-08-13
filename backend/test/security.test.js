@@ -4,6 +4,7 @@ import { canAccessPrivateResource, isResourceOwner } from "../utils/authorizatio
 import { isStrongPassword, cleanString, isPositiveInteger } from "../utils/validation.js";
 import { csrfProtection } from "../middleware/csrf.js";
 import { adminAuth } from "../middleware/adminAuth.js";
+import { rateLimit } from "../middleware/security.js";
 
 function responseDouble() {
   return {
@@ -17,6 +18,7 @@ function responseDouble() {
 test("ownership uses the authenticated user id", () => {
   assert.equal(isResourceOwner({ id: 7 }, "7"), true);
   assert.equal(isResourceOwner({ id: 7 }, 8), false);
+  assert.equal(isResourceOwner({ id: 7, is_admin: true }, 8), false);
 });
 
 test("only owners and admins access private resources", () => {
@@ -56,4 +58,21 @@ test("admin middleware enforces server-side role", async () => {
   let called = false;
   await adminAuth({ user: { is_admin: true } }, responseDouble(), () => { called = true; });
   assert.equal(called, true);
+});
+
+test("rate limiter supports authenticated-user keys", () => {
+  const limiter = rateLimit({
+    windowMs: 60_000,
+    max: 1,
+    keyPrefix: `test-${Date.now()}`,
+    keyGenerator: (req) => req.user.id,
+  });
+  const req = { ip: "127.0.0.1", user: { id: 42 } };
+  let called = 0;
+  limiter(req, responseDouble(), () => { called += 1; });
+  const blocked = responseDouble();
+  blocked.set = () => blocked;
+  limiter(req, blocked, () => { called += 1; });
+  assert.equal(called, 1);
+  assert.equal(blocked.statusCode, 429);
 });

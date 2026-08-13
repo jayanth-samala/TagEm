@@ -10,7 +10,7 @@ passport.use(new LocalStrategy ({
     try{
         const result = await pool.query(
           `SELECT id, name, email, password, is_admin, "profilePicUrl", auth_token_version
-           FROM users WHERE email = $1`, [user_email]
+           FROM users WHERE email = $1`, [user_email.trim().toLowerCase()]
         );
         if(result.rows.length === 0) {
             return cb(null, false, { message: 'Incorrect username or password.' });
@@ -41,21 +41,43 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value;
+        const googleEmail = profile.emails?.find((entry) => entry.verified === true) || profile.emails?.[0];
+        if (!googleEmail?.value || googleEmail.verified === false) {
+          return done(null, false, { message: "Google did not provide a verified email address." });
+        }
+        const email = googleEmail.value.toLowerCase();
+        const googleSubject = profile.id;
         const name = profile.displayName;
         const picture = profile.photos && profile.photos.length > 0 ? profile.photos[0].value : null;
 
         const result = await pool.query(
-          `SELECT id, name, email, is_admin, "profilePicUrl", auth_token_version
+          `SELECT id, name, email, password, google_subject, is_admin, "profilePicUrl", auth_token_version
            FROM users WHERE email = $1`, [email]
         );
         
         if (result.rows.length > 0) {
-          return done(null, result.rows[0]);
+          const existingUser = result.rows[0];
+          if (existingUser.google_subject === googleSubject) {
+            return done(null, existingUser);
+          }
+          if (existingUser.password || existingUser.google_subject) {
+            return done(null, false, { message: "This email is already registered with another sign-in method." });
+          }
+
+          const linked = await pool.query(
+            `UPDATE users SET google_subject = $1
+             WHERE id = $2 AND password IS NULL AND google_subject IS NULL
+             RETURNING id, name, email, is_admin, "profilePicUrl", auth_token_version`,
+            [googleSubject, existingUser.id]
+          );
+          if (linked.rows.length === 0) return done(null, false);
+          return done(null, linked.rows[0]);
         } else {
           const newUser = await pool.query(
-            'INSERT INTO users (name, email, "profilePicUrl") VALUES ($1, $2, $3) RETURNING *',
-            [name, email,picture]
+            `INSERT INTO users (name, email, "profilePicUrl", google_subject)
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, name, email, is_admin, "profilePicUrl", auth_token_version`,
+            [name, email, picture, googleSubject]
           );
           return done(null, newUser.rows[0]);
         }

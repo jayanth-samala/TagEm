@@ -1,6 +1,5 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import { isStrongPassword } from "../utils/validation.js";
 
 async function checkAdmin(adminId, res) {
@@ -159,53 +158,5 @@ export async function deleteUser(req, res) {
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Database error during delete" });
-  }
-}
-
-export async function resetDatabase(req, res) {
-  let client;
-  try {
-    const adminId = req.user.id;
-
-    const allowed = await checkAdmin(adminId, res);
-    if (!allowed) return;
-
-    client = await pool.connect();
-    await client.query("BEGIN");
-
-    await client.query(`DELETE FROM job_recipients`);
-    await client.query(`DELETE FROM jobs`);
-    await client.query(`DELETE FROM connection_tags`);
-    await client.query(`DELETE FROM posts`);
-    await client.query(`DELETE FROM meetups`);
-    await client.query(`DELETE FROM connections`);
-    await client.query(`DELETE FROM "connectionRequests"`);
-    await client.query(`DELETE FROM users`);
-
-    const temporaryPassword = `${crypto.randomBytes(18).toString("base64url")}Aa1!`;
-    const password = await bcrypt.hash(temporaryPassword, 10);
-
-    await client.query(
-      `
-      INSERT INTO users (name, email, password, is_admin)
-      VALUES
-        ($1, $2, $3, $4)`,
-      [
-        "Admin User",
-        "admin@test.com",
-        password,
-        true
-      ]
-    );
-
-    await client.query("COMMIT");
-
-    res.json({ message: "Database reset and repopulated", temporaryAdminPassword: temporaryPassword });
-  } catch (err) {
-    if (client) await client.query("ROLLBACK");
-    console.log(err);
-    res.status(500).json({ message: "Database reset failed" });
-  } finally {
-    client?.release();
   }
 }

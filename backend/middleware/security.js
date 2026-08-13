@@ -1,6 +1,18 @@
 import crypto from "crypto";
 
 const buckets = new Map();
+let lastBucketSweep = 0;
+
+function sweepBuckets(now) {
+  if (now - lastBucketSweep < 60_000) return;
+  lastBucketSweep = now;
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) buckets.delete(key);
+  }
+  while (buckets.size > 10_000) {
+    buckets.delete(buckets.keys().next().value);
+  }
+}
 
 export function requestLogger(req, res, next) {
   const requestId = req.get("X-Request-ID") || crypto.randomUUID();
@@ -34,10 +46,13 @@ export function securityHeaders(req, res, next) {
   next();
 }
 
-export function rateLimit({ windowMs, max, keyPrefix }) {
+export function rateLimit({ windowMs, max, keyPrefix, keyGenerator, skip }) {
   return (req, res, next) => {
+    if (skip?.(req)) return next();
     const now = Date.now();
-    const key = `${keyPrefix}:${req.ip}`;
+    sweepBuckets(now);
+    const identity = keyGenerator?.(req) || req.ip;
+    const key = `${keyPrefix}:${identity}`;
     let bucket = buckets.get(key);
     if (!bucket || bucket.resetAt <= now) {
       bucket = { count: 0, resetAt: now + windowMs };

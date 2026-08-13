@@ -5,7 +5,7 @@ export async function getUsers(req, res) {
       const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
       if (!search || search.length > 100) return res.json([]);
       const users = await pool.query(
-        `SELECT id, name, email, "profilePicUrl" FROM users
+        `SELECT id, name, "profilePicUrl" FROM users
          WHERE name ILIKE $1 AND id <> $2 ORDER BY name LIMIT 25`,
         [`${search}%`, req.user.id]
       );
@@ -50,7 +50,6 @@ export async function getRequests(req, res) {
         cr.receiver_id,
         cr.status,
         u.name,
-        u.email,
         u."profilePicUrl"
       FROM "connectionRequests" cr
       JOIN users u
@@ -196,15 +195,16 @@ export async function getConnectionStatus(req, res) {
 export async function getConnections(req, res) {
   try {
     const id = Number(req.params.id);
-    const includePrivateTags = id === req.user.id || req.user.is_admin;
+    if (id !== req.user.id) {
+      return res.status(403).json({ message: "Connection lists are private" });
+    }
 
     const result = await pool.query(
       `SELECT 
         u.id,
         u.name,
-        u.email,
         u."profilePicUrl",
-        ${includePrivateTags ? "ct.tag_type" : "NULL AS tag_type"}
+        ct.tag_type
       FROM connections c
       JOIN users u
       ON u.id = CASE

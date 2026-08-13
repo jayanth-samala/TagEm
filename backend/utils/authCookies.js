@@ -2,6 +2,7 @@ import crypto from "crypto";
 
 export const AUTH_COOKIE_NAME = "tagem_auth";
 export const CSRF_COOKIE_NAME = "tagem_csrf";
+export const OAUTH_STATE_COOKIE_NAME = "tagem_oauth_state";
 
 function isProduction() {
   return process.env.NODE_ENV === "production";
@@ -65,5 +66,20 @@ export function clearAuthCookies(res) {
   res.clearCookie(CSRF_COOKIE_NAME, {
     ...baseCookieOptions(),
     httpOnly: false,
+  });
+}
+
+export function setOAuthStateCookie(res, state) {
+  res.cookie(OAUTH_STATE_COOKIE_NAME, state, {
+    ...baseCookieOptions(),
+    httpOnly: true,
+    maxAge: 10 * 60 * 1000,
+  });
+}
+
+export function clearOAuthStateCookie(res) {
+  res.clearCookie(OAUTH_STATE_COOKIE_NAME, {
+    ...baseCookieOptions(),
+    httpOnly: true,
   });
 }

@@ -15,7 +15,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import jobsRouter from "./routes/jobsRoutes.js";
 import { authenticateToken } from "./middleware/auth.js";
 import { csrfProtection } from "./middleware/csrf.js";
-import { errorHandler, requestLogger, securityHeaders } from "./middleware/security.js";
+import { errorHandler, rateLimit, requestLogger, securityHeaders } from "./middleware/security.js";
 
 dotenv.config();
 
@@ -47,6 +47,13 @@ app.get("/api/ready", async (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api", authenticateToken);
+app.use("/api", rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 120,
+  keyPrefix: "authenticated-write",
+  keyGenerator: (req) => req.user?.id || req.ip,
+  skip: (req) => new Set(["GET", "HEAD", "OPTIONS"]).has(req.method),
+}));
 app.use("/api", csrfProtection);
 app.use("/api/users", Router);
 app.use("/api/getUsers", connectionRouter);

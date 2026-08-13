@@ -71,25 +71,6 @@ export default function Admin() {
     setMessage(data.message);
   }
 
-  async function resetDatabase() {
-    const confirmed = window.confirm(
-      "Are you sure? This will delete and repopulate the database."
-    );
-
-    if (!confirmed) return;
-
-    const response = await fetch(
-      "http://localhost:5001/api/admin/reset-database",
-      {
-        method: "POST",
-      }
-    );
-
-    const data = await response.json();
-    setMessage(data.message);
-    loadUsers();
-  }
-
   function handleChange(id, field, value) {
     setUsers(
       users.map((user) =>
@@ -103,10 +84,6 @@ export default function Admin() {
       <h1>Admin Page</h1>
 
       {message && <p>{message}</p>}
-
-      <button onClick={resetDatabase}>
-        Reset and Repopulate Database
-      </button>
 
       <section>
         <h2>Manage Users</h2>

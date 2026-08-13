@@ -1,6 +1,6 @@
 import pool from "../config/db.js"
 import { cleanString } from "../utils/validation.js";
-import { sendStoredFile, storeUpload } from "../utils/fileStorage.js";
+import { deleteStoredFile, sendStoredFile, storeUpload } from "../utils/fileStorage.js";
 import { canAccessPrivateResource } from "../utils/authorization.js";
 
 export async function updateProfile(req, res){
@@ -8,6 +8,11 @@ export async function updateProfile(req, res){
         const id = req.user.id;
         const user_name = cleanString(req.body.name, { min: 2, max: 100 });
         if (!user_name) return res.status(400).json({ message: "Invalid profile name" });
+        const existing = await pool.query(
+            `SELECT "profilePicUrl", resumeattached FROM users WHERE id = $1`,
+            [id]
+        );
+        if (existing.rows.length === 0) return res.status(404).json({ message: "User not found" });
         const user_profilePicUrl = req.files?.image
             ? await storeUpload(req.files.image[0], { userId: id, category: "images" })
             : null;
@@ -29,6 +34,12 @@ export async function updateProfile(req, res){
              RETURNING name, "profilePicUrl", "genderIdentity", occupation, bio, resumeattached`,
             [user_name, user_profilePicUrl, user_genderIdentity, user_occupation, user_bio, user_resumeUrl, id]
         );
+            const oldFiles = existing.rows[0];
+            const staleReferences = [
+                user_profilePicUrl && oldFiles.profilePicUrl,
+                user_resumeUrl && oldFiles.resumeattached,
+            ].filter(Boolean);
+            await Promise.allSettled(staleReferences.map(deleteStoredFile));
             return res.status(200).json(result.rows[0]);
     } catch(err){
         console.log(err);
