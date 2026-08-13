@@ -9,7 +9,7 @@ export default function MeetupDetails() {
 
   useEffect(() => {
     fetchMeetup();
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchMeetup() {
     try {

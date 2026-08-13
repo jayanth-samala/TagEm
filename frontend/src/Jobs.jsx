@@ -21,7 +21,7 @@ export default function Jobs() {
     loadJobs();
     loadJobsSentByUser();
     loadOptions();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadJobs() {
     const response = await fetch(`http://localhost:5001/api/jobs/${user.id}`);

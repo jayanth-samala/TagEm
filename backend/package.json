@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "node --test",
     "migrate:create": "node-pg-migrate create",
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down"
@@ -14,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "decrypt": "^0.0.1",

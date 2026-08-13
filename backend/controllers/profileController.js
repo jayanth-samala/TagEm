@@ -1,5 +1,7 @@
 import pool from "../config/db.js"
 import { cleanString } from "../utils/validation.js";
+import { sendStoredFile, storeUpload } from "../utils/fileStorage.js";
+import { canAccessPrivateResource } from "../utils/authorization.js";
 
 export async function updateProfile(req, res){
     try{
@@ -7,10 +9,10 @@ export async function updateProfile(req, res){
         const user_name = cleanString(req.body.name, { min: 2, max: 100 });
         if (!user_name) return res.status(400).json({ message: "Invalid profile name" });
         const user_profilePicUrl = req.files?.image
-            ? `${process.env.BACKEND_URL || "http://localhost:5001"}/uploads/${req.files.image[0].filename}`
+            ? await storeUpload(req.files.image[0], { userId: id, category: "images" })
             : null;
         const user_resumeUrl = req.files?.resume
-            ? `/uploads/${req.files.resume[0].filename}`
+            ? await storeUpload(req.files.resume[0], { userId: id, category: "resumes" })
             : null;
         const user_genderIdentity = cleanString(req.body.genderIdentity || "", { min: 0, max: 100 });
         const user_occupation = cleanString(req.body.occupation || "", { min: 0, max: 150 });
@@ -38,15 +40,38 @@ export async function updateProfile(req, res){
 export async function showProfile(req, res){
     try {
         const id = Number(req.params.id);
-        const isOwnerOrAdmin = id === req.user.id || req.user.is_admin;
+        const isOwnerOrAdmin = canAccessPrivateResource(req.user, id);
         const user = await pool.query(
           `SELECT name, "profilePicUrl", "genderIdentity", occupation, bio${isOwnerOrAdmin ? ", resumeattached" : ""}
            FROM users WHERE id = $1`, [id]
         );
         if (user.rows.length === 0) return res.status(404).json({ message: "User not found" });
-        res.send(user.rows[0]);
+        const profile = user.rows[0];
+        const baseUrl = process.env.BACKEND_URL || "http://localhost:5001";
+        if (profile.profilePicUrl) profile.profilePicUrl = `${baseUrl}/api/Profile/${id}/image`;
+        if (profile.resumeattached) profile.resumeattached = `/api/Profile/${id}/resume`;
+        res.send(profile);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Database error" });
     }
+}
+
+export function sendProfileFile(kind) {
+    return async (req, res) => {
+        const userId = Number(req.params.id);
+        if (kind === "resume" && !canAccessPrivateResource(req.user, userId)) {
+            return res.status(404).json({ message: "File not found" });
+        }
+        try {
+            const column = kind === "image" ? '"profilePicUrl"' : "resumeattached";
+            const result = await pool.query(`SELECT ${column} AS reference FROM users WHERE id = $1`, [userId]);
+            if (result.rows.length === 0 || !await sendStoredFile(res, result.rows[0].reference)) {
+                return res.status(404).json({ message: "File not found" });
+            }
+        } catch (error) {
+            console.error("Stored file error:", error);
+            if (!res.headersSent) res.status(500).json({ message: "Unable to retrieve file" });
+        }
+    };
 }

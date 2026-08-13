@@ -66,10 +66,13 @@ export async function getRequests(req, res) {
 }
 
 export async function acceptRequest(req, res) {
+    let client;
     try {
         const requestId = req.params.id;
+        client = await pool.connect();
+        await client.query("BEGIN");
 
-        const request = await pool.query(
+        const request = await client.query(
             `SELECT sender_id, receiver_id
              FROM "connectionRequests"
              WHERE id = $1 AND receiver_id = $2`,
@@ -77,6 +80,7 @@ export async function acceptRequest(req, res) {
         );
 
         if (request.rows.length === 0) {
+            await client.query("ROLLBACK");
             return res.status(404).json({
                 message: "Request not found"
             });
@@ -84,7 +88,7 @@ export async function acceptRequest(req, res) {
 
         const { sender_id, receiver_id } = request.rows[0];
 
-        await pool.query(
+        await client.query(
             `UPDATE "connectionRequests"
              SET status = 'accepted'
              WHERE id = $1 AND receiver_id = $2`,
@@ -94,22 +98,26 @@ export async function acceptRequest(req, res) {
         const user1 = Math.min(sender_id, receiver_id);
         const user2 = Math.max(sender_id, receiver_id);
 
-        await pool.query(
+        await client.query(
             `INSERT INTO connections (user1_id, user2_id)
-             VALUES ($1, $2)`,
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
             [user1, user2]
         );
+
+        await client.query("COMMIT");
 
         return res.status(200).json({
             message: "Request accepted"
         });
-        console.log("accepted");
-
     } catch (err) {
+        if (client) await client.query("ROLLBACK");
         console.log(err);
         return res.status(500).json({
             message: "Database error"
         });
+    } finally {
+        client?.release();
     }
 }
 

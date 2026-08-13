@@ -1,24 +1,14 @@
 import express from "express";
 import {updateProfile, showProfile} from "../controllers/profileController.js";
 import multer from "multer";
-import path from "path";
-import crypto from "crypto";
-import { fileURLToPath } from "url";
-import fs from "fs/promises";
+import { sendProfileFile } from "../controllers/profileController.js";
+import { isResourceOwner } from "../utils/authorization.js";
 
 const router = express.Router();
-const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../uploads");
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDirectory);
-},
-  filename: function (req, file, cb) {
-    cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`);
-  }
-});
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 2 },
+  storage: multer.memoryStorage(),
+  // Stay below Vercel Functions' 4.5 MB request limit, including multipart overhead.
+  limits: { fileSize: 4 * 1024 * 1024, files: 2 },
   fileFilter(req, file, cb) {
     const allowed = file.fieldname === "image"
       ? new Set(["image/jpeg", "image/png", "image/webp"])
@@ -28,7 +18,7 @@ const upload = multer({
 });
 
 function requireSelf(req, res, next) {
-  if (Number(req.params.id) !== req.user.id) {
+  if (!isResourceOwner(req.user, req.params.id)) {
     return res.status(403).json({ message: "You can only update your own profile" });
   }
   next();
@@ -38,10 +28,7 @@ async function verifyFileSignatures(req, res, next) {
   try {
     for (const [field, files] of Object.entries(req.files || {})) {
       for (const file of files) {
-        const handle = await fs.open(file.path, "r");
-        const header = Buffer.alloc(12);
-        await handle.read(header, 0, header.length, 0);
-        await handle.close();
+        const header = file.buffer.subarray(0, 12);
 
         const isPdf = header.subarray(0, 5).toString() === "%PDF-";
         const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
@@ -50,7 +37,6 @@ async function verifyFileSignatures(req, res, next) {
         const valid = field === "resume" ? isPdf : isJpeg || isPng || isWebp;
 
         if (!valid) {
-          await Promise.all(Object.values(req.files).flat().map((uploaded) => fs.unlink(uploaded.path).catch(() => {})));
           return res.status(400).json({ message: `Invalid ${field} file content` });
         }
       }
@@ -65,6 +51,8 @@ router.put("/:id", requireSelf, upload.fields([
     { name: "image", maxCount: 1 },
     { name: "resume", maxCount: 1 }
   ]), verifyFileSignatures, updateProfile);
+router.get("/:id/image", sendProfileFile("image"));
+router.get("/:id/resume", sendProfileFile("resume"));
 router.get("/:id", showProfile);
 
 router.use((error, req, res, next) => {

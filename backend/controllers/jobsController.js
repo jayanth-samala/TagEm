@@ -79,6 +79,7 @@ export async function getJobsSentByUser(req, res) {
 } 
 
 export async function createJob(req, res) {
+  let client;
   try {
     const {
       title,
@@ -97,9 +98,10 @@ export async function createJob(req, res) {
     if (!safeTitle || !safeCompany || !safeLocation || !safeDescription) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    await pool.query("BEGIN");
+    client = await pool.connect();
+    await client.query("BEGIN");
 
-    const newJob = await pool.query(
+    const newJob = await client.query(
       `
       INSERT INTO jobs (title, company, location, description, sender_id)
       VALUES ($1, $2, $3, $4, $5)
@@ -118,7 +120,7 @@ export async function createJob(req, res) {
     }
     if (selectedTagTypes && selectedTagTypes.length > 0) {
       for (let i = 0; i < selectedTagTypes.length; i++) {
-        const taggedUsers = await pool.query(
+        const taggedUsers = await client.query(
           `
           SELECT connection_user_id
           FROM connection_tags
@@ -135,7 +137,7 @@ export async function createJob(req, res) {
     }
 
     for (const recipientId of recipients) {
-      await pool.query(
+      await client.query(
         `
         INSERT INTO job_recipients (job_id, recipient_id)
         SELECT $1, $2
@@ -149,13 +151,15 @@ export async function createJob(req, res) {
       );
     }
 
-    await pool.query("COMMIT");
+    await client.query("COMMIT");
 
     res.status(201).json({ message: "Job created" });
   } catch (err) {
-    await pool.query("ROLLBACK");
+    if (client) await client.query("ROLLBACK");
     console.log(err);
     res.status(500).json({ message: "Database error creating job" });
+  } finally {
+    client?.release();
   }
 }
 

@@ -16,11 +16,11 @@ function Connections() {
 
   useEffect(() => {
     displayUsers();
-  }, [search]);
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     displayConnections();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function displayRequests() {
     try {

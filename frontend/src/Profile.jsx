@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link} from 'react-router-dom';
-import Connections from './Connections';
 import './Profile.css';
 
 
@@ -22,12 +21,11 @@ const ProfilePage = () => {
     const [isEditingDetails, setIsEditingDetails] = useState(false);
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [isEditingResume, setIsEditingResume] = useState(false);
-    const [error, setError] = useState("");
     const [image, handleImage] = useState(null);
     const [resume, setResume] = useState(null);
     const [requestStatus, setRequestStatus] = useState("connect");
     const [postContent, setPostContent] = useState("");
-    const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+    const [, setActiveCommentPostId] = useState(null);
     const [commentText, setCommentText] = useState("");
     const [viewingPost, setViewingPost] = useState(null);
     const [tagEms, setTagEms] = useState([
@@ -62,7 +60,7 @@ const ProfilePage = () => {
         }
     useEffect(() => {
         fetchPosts();
-    }, [profileId]);
+    }, [profileId]); // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
         async function fetchProfileData() {
             const storedUserString = localStorage.getItem("user");
@@ -70,7 +68,6 @@ const ProfilePage = () => {
                 console.log("No user is logged in");
                 return;
             }
-            const storedUser = JSON.parse(storedUserString);
             try {
                 const response = await fetch(`http://localhost:5001/api/Profile/${profileId}`);
 
@@ -273,7 +270,7 @@ console.error("Error liking post:", err);
     useEffect(() => {
         handleFetch();
         window.scrollTo(0,0);
-    }, [profileId])
+    }, [profileId]) // eslint-disable-line react-hooks/exhaustive-deps
     const handleCreatePost = async (e) => {
         e.preventDefault();
         try {
@@ -550,7 +547,6 @@ console.error("Error liking post:", err);
                                     placeholder="What's on your mind?"
                                     rows="5"
                                 />
-                                {error && <p style={{ color: "orange" }}>{error}</p>}
                                 <button className="edit-button" type="submit" disabled={!postContent.trim()}>Post</button>
                             </form>
                         </div>

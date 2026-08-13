@@ -163,22 +163,29 @@ export async function deleteUser(req, res) {
 }
 
 export async function resetDatabase(req, res) {
+  let client;
   try {
     const adminId = req.user.id;
 
     const allowed = await checkAdmin(adminId, res);
     if (!allowed) return;
 
-    await pool.query("BEGIN");
+    client = await pool.connect();
+    await client.query("BEGIN");
 
-    await pool.query(`DELETE FROM connections`);
-    await pool.query(`DELETE FROM "connectionRequests"`);
-    await pool.query(`DELETE FROM users`);
+    await client.query(`DELETE FROM job_recipients`);
+    await client.query(`DELETE FROM jobs`);
+    await client.query(`DELETE FROM connection_tags`);
+    await client.query(`DELETE FROM posts`);
+    await client.query(`DELETE FROM meetups`);
+    await client.query(`DELETE FROM connections`);
+    await client.query(`DELETE FROM "connectionRequests"`);
+    await client.query(`DELETE FROM users`);
 
     const temporaryPassword = `${crypto.randomBytes(18).toString("base64url")}Aa1!`;
     const password = await bcrypt.hash(temporaryPassword, 10);
 
-    await pool.query(
+    await client.query(
       `
       INSERT INTO users (name, email, password, is_admin)
       VALUES
@@ -191,12 +198,14 @@ export async function resetDatabase(req, res) {
       ]
     );
 
-    await pool.query("COMMIT");
+    await client.query("COMMIT");
 
     res.json({ message: "Database reset and repopulated", temporaryAdminPassword: temporaryPassword });
   } catch (err) {
-    await pool.query("ROLLBACK");
+    if (client) await client.query("ROLLBACK");
     console.log(err);
     res.status(500).json({ message: "Database reset failed" });
+  } finally {
+    client?.release();
   }
 }
