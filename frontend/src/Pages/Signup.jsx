@@ -74,9 +74,9 @@ function Signup() {
             type="password"
             placeholder="Create a password"
             value={password}
-            minLength={12}
+            minLength={8}
             maxLength={128}
-            title="Use uppercase, lowercase, a number, and a symbol"
+            title="Use at least 8 characters with a letter and a number"
             onChange={(e) => setPassword(e.target.value)}
           />
 

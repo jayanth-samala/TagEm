@@ -29,7 +29,9 @@ test("only owners and admins access private resources", () => {
 
 test("password and primitive validation reject unsafe input", () => {
   assert.equal(isStrongPassword("weakpassword"), false);
-  assert.equal(isStrongPassword("StrongPassword1!"), true);
+  assert.equal(isStrongPassword("password1"), true);
+  assert.equal(isStrongPassword("12345678"), false);
+  assert.equal(isStrongPassword("pass1"), false);
   assert.equal(cleanString("  hello  ", { max: 10 }), "hello");
   assert.equal(isPositiveInteger("12"), true);
   assert.equal(isPositiveInteger("-1"), false);

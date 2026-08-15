@@ -106,7 +106,7 @@ export async function changeUserPassword(req, res) {
     if (!allowed) return;
 
     if (!isStrongPassword(newPassword)) {
-      return res.status(400).json({ message: "Password must be 12–128 characters with uppercase, lowercase, number, and symbol" });
+      return res.status(400).json({ message: "Password must be 8–128 characters with at least one letter and one number" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

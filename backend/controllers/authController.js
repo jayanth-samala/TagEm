@@ -21,7 +21,7 @@ export async function createUser(req, res) {
                 return res.status(409).json({message: "Email already exists"});
             }
         } else {
-            return res.status(400).json({message: "Use a valid name and email, and a 12–128 character password containing uppercase, lowercase, number, and symbol"});
+            return res.status(400).json({message: "Use a valid name and email, and an 8–128 character password containing at least one letter and one number"});
         }
         
     } catch(err) {
