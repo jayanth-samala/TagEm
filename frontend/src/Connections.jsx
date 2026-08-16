@@ -164,7 +164,12 @@ function Connections() {
       setConnections(
         connections.map((connection) =>
           connection.id === connectionId
-            ? { ...connection, tag_type: tagType }
+            ? {
+                ...connection,
+                tags: connection.tags?.includes(tagType)
+                  ? connection.tags
+                  : [...(connection.tags || []), tagType].sort(),
+              }
             : connection
         )
       );
@@ -179,51 +184,58 @@ function Connections() {
   }
 
   return (
-    <div className="connections-page">
-      <div className="Search">
-        <input
-          type="text"
-          placeholder="Search to connect..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="input"
-        />
+    <main className="connections-page">
+      <h1>Connections</h1>
 
-        <div className="Dropdown">
-          {users.map((person) => (
-            <div
-              className="person"
-              key={person.id}
-              onClick={() => navigate(`/profile/${person.id}`)}
-            >
-              <img
-                src={
-                  person.profilePicUrl ||
-                  "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"
-                }
-                alt={person.name}
-              />
+      <section className="connections-toolbar">
+        <div className="Search">
+          <input
+            type="text"
+            placeholder="Search for people to connect with"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="input"
+          />
 
-              <h3>{person.name}</h3>
+          {search && users.length > 0 && (
+            <div className="Dropdown">
+              {users.map((person) => (
+                <button
+                  type="button"
+                  className="person"
+                  key={person.id}
+                  onClick={() => navigate(`/profile/${person.id}`)}
+                >
+                  <img
+                    src={
+                      person.profilePicUrl ||
+                      "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"
+                    }
+                    alt=""
+                  />
+
+                  <span>{person.name}</span>
+                </button>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </div>
 
-      <div className="connections-header">
-        <h1>Connections</h1>
-      </div>
+        <div className="filter-buttons">
+          <button className={!showRequests ? "active" : ""} onClick={displayConnections}>All Connections</button>
+          <button className={showRequests ? "active" : ""} onClick={displayRequests}>Requests</button>
+        </div>
+      </section>
 
       <div className="filter-buttons">
         <button onClick={displayConnections}>All</button>
-        <button>Recruiters</button>
         <button onClick={displayRequests}>Requests</button>
       </div>
 
       <div className="connections-grid">
         {showRequests
           ? requests.map((request) => (
-              <div className="request-card" key={request.id}>
+              <article className="request-card" key={request.id}>
                 <Link to={`/profile/${request.sender_id}`}>
                   <img
                     src={
@@ -252,10 +264,10 @@ function Connections() {
                     Reject
                   </button>
                 </div>
-              </div>
+              </article>
             ))
           : connections.map((connection) => (
-              <div className="request-card" key={connection.id}>
+              <article className="request-card" key={connection.id}>
                 <Link to={`/profile/${connection.id}`}>
                   <img
                     src={
@@ -269,9 +281,9 @@ function Connections() {
                   <h3>{connection.name}</h3>
                 </Link>
 
-                {connection.tag_type && (
+                {connection.tags?.length > 0 && (
                   <p className="connection-tag">
-                    <strong>Tag:</strong> {connection.tag_type}
+                    <strong>Tags:</strong> {connection.tags.join(", ")}
                   </p>
                 )}
 
@@ -287,10 +299,10 @@ function Connections() {
                     Save Tag
                   </button>
                 </div>
-              </div>
+              </article>
             ))}
       </div>
-    </div>
+    </main>
   );
 }
 

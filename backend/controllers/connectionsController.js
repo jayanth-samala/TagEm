@@ -195,16 +195,21 @@ export async function getConnectionStatus(req, res) {
 export async function getConnections(req, res) {
   try {
     const id = Number(req.params.id);
-    if (id !== req.user.id) {
-      return res.status(403).json({ message: "Connection lists are private" });
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "Invalid user" });
     }
+    const includePrivateTags = id === req.user.id;
 
     const result = await pool.query(
       `SELECT 
         u.id,
         u.name,
         u."profilePicUrl",
-        ct.tag_type
+        ${includePrivateTags ? `COALESCE(
+          ARRAY_AGG(DISTINCT ct.tag_type ORDER BY ct.tag_type)
+            FILTER (WHERE ct.tag_type IS NOT NULL),
+          ARRAY[]::varchar[]
+        )` : "ARRAY[]::varchar[]"} AS tags
       FROM connections c
       JOIN users u
       ON u.id = CASE
@@ -212,9 +217,11 @@ export async function getConnections(req, res) {
         ELSE c.user1_id
       END
       LEFT JOIN connection_tags ct
-      ON ct.owner_id = $1
+      ON ${includePrivateTags ? "ct.owner_id = $1" : "FALSE"}
       AND ct.connection_user_id = u.id
-      WHERE c.user1_id = $1 OR c.user2_id = $1`,
+      WHERE c.user1_id = $1 OR c.user2_id = $1
+      GROUP BY u.id, u.name, u."profilePicUrl"
+      ORDER BY u.name`,
       [id]
     );
 

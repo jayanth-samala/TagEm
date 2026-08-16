@@ -16,7 +16,7 @@ function Login() {
 
         const { user } = await response.json();
         localStorage.setItem("user", JSON.stringify(user));
-        navigate("/Profile", { replace: true });
+        navigate("/Jobs", { replace: true });
       } catch (err) {
         console.error("Failed to restore session", err);
       }
@@ -45,7 +45,7 @@ function Login() {
         return;
       }
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/Profile");
+      navigate("/Jobs");
     } catch(err) {
       console.log("Error sending data:", err);
       setError("An error occurred. Please recheck your login credentials and try again.");

@@ -1,169 +1,146 @@
 .connections-page {
-  padding: 40px;
-  background-color: #f3f2ef;
-  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
 }
 
-.connections-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-
-.connections-header h1 {
-  font-size: 32px;
+.connections-page h1 {
+  margin: 0 0 30px;
   color: #222;
+  text-align: center;
 }
 
-.connections-header input {
-  width: 280px;
-  padding: 12px 16px;
+.connections-toolbar {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 40px;
+  padding: 20px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.Search {
+  position: relative;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 25px;
+  border-radius: 8px;
+}
+
+.input:focus {
   outline: none;
+  border-color: #0077ff;
+}
+
+.Dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #222;
+  text-align: left;
+  background: white;
+  border: 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.person:last-child {
+  border-bottom: 0;
+}
+
+.person:hover {
+  background: #f5f8fc;
+}
+
+.person img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.person span {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .filter-buttons {
   display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 10px;
+}
+
+.filter-buttons button,
+.tag-box button,
+.card-buttons button {
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .filter-buttons button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 20px;
-  background-color: white;
-  cursor: pointer;
-  font-weight: 500;
+  color: #333;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
 }
 
-.filter-buttons button:hover {
-  background-color: #0a66c2;
+.filter-buttons button:hover,
+.filter-buttons button.active {
   color: white;
+  background: #0077ff;
+  border-color: #0077ff;
 }
 
 .connections-grid {
   display: grid;
- grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 }
 
-.connection-card {
-  background-color: white;
-  border-radius: 16px;
-  padding: 24px;
-  text-align: center;
-  border: 1px solid #ddd;
-  width: 300px;
-}
-
-.connection-card img {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 14px;
-}
-
-.connection-card h3 {
-  margin: 8px 0;
-  font-size: 20px;
-}
-
-.connection-card p {
-  color: #555;
-  margin-bottom: 8px;
-}
-
-.connection-card span {
-  font-size: 14px;
-  color: #777;
-}
-
-.card-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.card-buttons button {
-  flex: 1;
-  padding: 9px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.message-btn {
-  background-color: #0a66c2;
-  color: white;
-  border: none;
-}
-
-.remove-btn {
-  background-color: white;
-  color: #555;
-  border: 1px solid #aaa;
-}
-
-.Search{
-  display: flex;
-  justify-content: center;
-  position: relative;
-
-}
-
-.input{
-  width: 500px;
-  height: 30px;
-  border-radius: 30px;
-  border: ghostwhite;
-  padding-left: 20px;
-}
-
-.Dropdown {
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 37px;
-  z-index: 1;
-  width: 500px;
-  border-radius: 20px;
-
-}
-
-.Dropdown h3{
-  padding: 20px;
-  margin: -2px;
-}
-
-.Dropdown .person:hover {
-  background-color: gainsboro;
-}
-
-.person{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding-left: 1rem;
-}
-
-.person img{
-  border-radius: 50%;
-  height: 30px;
-  width: 30px;
-}
-
 .request-card {
-  width: 260px;
-  padding: 16px;
-  border-radius: 12px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 20px;
   text-align: center;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.request-card > a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.request-card h3 {
+  margin: 10px 0;
+  color: #0077ff;
 }
 
 .request-pic {
@@ -173,32 +150,71 @@
   object-fit: cover;
 }
 
-.accept-btn {
-  background-color: #1d9bf0;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 14px;
+.connection-tag {
+  min-height: 20px;
+  margin: 10px 0;
+  color: #333;
+  overflow-wrap: anywhere;
 }
 
+.card-buttons,
 .tag-box {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.card-buttons button,
+.tag-box button {
+  flex: 1;
+  color: white;
+  background: #0077ff;
+  border: 0;
+}
+
+.card-buttons button:hover,
+.tag-box button:hover {
+  background: #005fcc;
+}
+
+.card-buttons .remove-btn {
+  color: #333;
+  background: white;
+  border: 1px solid #ccc;
+}
+
+.card-buttons .remove-btn:hover {
+  color: #222;
+  background: #f2f2f2;
 }
 
 .tag-box input {
-  flex: 1;
-  padding: 3px;
-  border: 1px solid #cccccc;
-  border-radius: 6px;
+  min-width: 0;
+  flex: 2;
+  padding: 10px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
 }
 
-.tag-box button {
-  padding: 8px 10px;
-  border: none;
-  border-radius: 6px;
-  background-color: #0077ff;
-  color: white;
-  cursor: pointer;
+.tag-box input:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
+@media (max-width: 600px) {
+  .connections-page {
+    padding: 30px 15px;
+  }
+
+  .filter-buttons,
+  .card-buttons,
+  .tag-box {
+    flex-direction: column;
+  }
+
+  .connections-grid {
+    grid-template-columns: 1fr;
+  }
 }
