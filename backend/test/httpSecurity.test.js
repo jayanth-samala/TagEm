@@ -6,6 +6,7 @@ import adminRoutes from "../routes/adminRoutes.js";
 import connectionRoutes from "../routes/connectionRoutes.js";
 import jobsRoutes from "../routes/jobsRoutes.js";
 import postsRoutes from "../routes/postsRouter.js";
+import userRoutes from "../routes/userRoutes.js";
 import { validateJwtSecret } from "../config/securityEnvironment.js";
 import { up as connectionIntegrityMigration } from "../migrations/1782400000000_connectionIntegrity.js";
 
@@ -206,4 +207,36 @@ test("connection migration deduplicates data before enforcing pair uniqueness", 
   assert.match(sql, /CREATE UNIQUE INDEX connection_requests_unique_pending_pair/);
   assert.ok(operations.some((operation) => operation[2] === "connections_unique_pair"));
   assert.ok(operations.some((operation) => operation[2] === "connections_canonical_pair"));
+});
+
+test("account deletion HTTP route deletes only the authenticated user", async () => {
+  const originalConnect = pool.connect;
+  const queries = [];
+  const client = {
+    async query(sql, parameters = []) {
+      const text = String(sql);
+      queries.push({ sql: text, parameters });
+      if (text.includes("SELECT \"profilePicUrl\"")) {
+        return { rows: [{ profilePicUrl: null, resumeattached: null }] };
+      }
+      if (text.includes("DELETE FROM users")) return { rows: [{ id: 7 }] };
+      return { rows: [] };
+    },
+    release() {},
+  };
+  pool.connect = async () => client;
+  try {
+    const response = await request(routeApp(userRoutes, { id: 7, is_admin: false }), "/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: 999 }),
+    });
+    assert.equal(response.status, 200);
+    const deleteQuery = queries.find(({ sql }) => sql.includes("DELETE FROM users"));
+    assert.ok(deleteQuery);
+    assert.deepEqual(deleteQuery.parameters, [7]);
+    assert.ok(queries.some(({ sql }) => sql === "COMMIT"));
+  } finally {
+    pool.connect = originalConnect;
+  }
 });

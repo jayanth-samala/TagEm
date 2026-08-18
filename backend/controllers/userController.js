@@ -1,4 +1,6 @@
 import pool from "../config/db.js"
+import { clearAuthCookies } from "../utils/authCookies.js";
+import { deleteStoredFile } from "../utils/fileStorage.js";
 
 export async function getUsers(req, res) {
     try {
@@ -36,5 +38,53 @@ export async function getUserProfile(req, res) {
     } catch (err) {
         console.error("Error fetching user profile:", err);
         return res.status(500).json({ message: "Database error" });
+    }
+}
+
+export async function deleteOwnAccount(req, res) {
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query("BEGIN");
+
+        const account = await client.query(
+          `SELECT "profilePicUrl", resumeattached
+           FROM users
+           WHERE id = $1
+           FOR UPDATE`,
+          [req.user.id]
+        );
+        if (account.rows.length === 0) {
+            await client.query("ROLLBACK");
+            clearAuthCookies(res);
+            return res.status(404).json({ message: "Account not found" });
+        }
+
+        const references = [
+            account.rows[0].profilePicUrl,
+            account.rows[0].resumeattached,
+        ].filter(Boolean);
+        await Promise.all(references.map(deleteStoredFile));
+
+        const deleted = await client.query(
+          `DELETE FROM users
+           WHERE id = $1
+           RETURNING id`,
+          [req.user.id]
+        );
+        if (deleted.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ message: "Account not found" });
+        }
+
+        await client.query("COMMIT");
+        clearAuthCookies(res);
+        return res.json({ message: "Account and associated data deleted" });
+    } catch (error) {
+        if (client) await client.query("ROLLBACK");
+        console.error("Account deletion error:", error);
+        return res.status(500).json({ message: "Unable to delete account" });
+    } finally {
+        client?.release();
     }
 }
