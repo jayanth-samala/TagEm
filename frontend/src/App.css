@@ -81,3 +81,58 @@ nav a:hover {
 .dropdown-menu button:hover {
   background-color: #f5f5f5;
 }
+
+@media (max-width: 700px) {
+  nav {
+    height: auto;
+    min-height: 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 10px 12px 0;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .logoLink {
+    position: static;
+  }
+
+  .logoLink img {
+    width: 46px;
+  }
+
+  .profile-menu {
+    position: relative;
+    margin-left: auto;
+  }
+
+  .navLinks {
+    position: static;
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    box-sizing: border-box;
+    margin-top: 8px;
+    padding: 10px 0 12px;
+    overflow-x: auto;
+    border-top: 1px solid #eeeeee;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .navLinks::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navLinks a {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    white-space: nowrap;
+  }
+
+  .dropdown-menu {
+    top: 46px;
+    right: 0;
+  }
+}
