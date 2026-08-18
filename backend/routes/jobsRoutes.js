@@ -1,6 +1,6 @@
 import express from "express";
 
-import { getJobsForUser, getJobsSentByUser, createJob, getJobSendOptions, setConnectionTag, deleteConnectionTag, deleteJob } from "../controllers/jobsController.js";
+import { getJobsForUser, getJobsSentByUser, createJob, getJobSendOptions, setConnectionTag, updateConnectionTag, deleteConnectionTag, deleteJob } from "../controllers/jobsController.js";
 import { rateLimit } from "../middleware/security.js";
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.get("/jobsSentByUser/:userId", getJobsSentByUser);
 router.get("/:userId", getJobsForUser);
 router.post("/", jobMutationLimit, createJob);
 router.post("/connection-tags", jobMutationLimit, setConnectionTag);
+router.put("/connection-tags/:connectionUserId", jobMutationLimit, updateConnectionTag);
 router.delete("/connection-tags/:ownerId/:connectionUserId/:tagType", jobMutationLimit, deleteConnectionTag);
 router.delete("/:jobId", jobMutationLimit, deleteJob);
 

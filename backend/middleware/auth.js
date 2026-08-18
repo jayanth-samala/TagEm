@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 import { AUTH_COOKIE_NAME, parseCookies } from "../utils/authCookies.js";
+import { getJwtSecret } from "../config/securityEnvironment.js";
 
 export async function authenticateToken(req, res, next) {
   const token = parseCookies(req)[AUTH_COOKIE_NAME];
@@ -10,7 +11,7 @@ export async function authenticateToken(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     const result = await pool.query(
       `SELECT id, name, email, is_admin, "profilePicUrl", auth_token_version
        FROM users

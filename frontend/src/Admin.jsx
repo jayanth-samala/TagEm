@@ -92,16 +92,19 @@ export default function Admin() {
           <div key={user.id} className="admin-user-card">
             <input
               value={user.name}
+              disabled={user.is_admin}
               onChange={(e) => handleChange(user.id, "name", e.target.value)}
             />
 
             <input
               value={user.email}
+              disabled={user.is_admin}
               onChange={(e) => handleChange(user.id, "email", e.target.value)}
             />
 
             <input
               value={user.profilePicUrl || ""}
+              disabled={user.is_admin}
               onChange={(e) =>
                 handleChange(user.id, "profilePicUrl", e.target.value)
               }
@@ -113,21 +116,20 @@ export default function Admin() {
               <input
                 type="checkbox"
                 checked={user.is_admin}
-                onChange={(e) =>
-                  handleChange(user.id, "is_admin", e.target.checked)
-                }
+                disabled
+                title="Administrator roles can only be changed in the database"
               />
             </label>
 
-            <button onClick={() => updateUser(user)}>
+            <button disabled={user.is_admin} onClick={() => updateUser(user)}>
               Save Changes
             </button>
 
-            <button onClick={() => changePassword(user.id)}>
+            <button disabled={user.is_admin} onClick={() => changePassword(user.id)}>
               Change Password
             </button>
 
-            <button onClick={() => deleteUser(user.id)}>
+            <button disabled={user.is_admin} onClick={() => deleteUser(user.id)}>
               Delete User
             </button>
           </div>

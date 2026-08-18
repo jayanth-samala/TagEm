@@ -5,27 +5,38 @@
   padding: 40px 20px;
   background-color: #f9f9f9;
   min-height: 100vh;
+  color: #333;
+  font-family: Arial, sans-serif;
 }
 .profile-container {
   padding: 20px;
   margin: 1rem;
-  font-family: system-ui, sans-serif;
   color: #333;
   justify-content: left;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   max-width: 400px;
 }
 
 .profile-header {
-  max-height: 162px;
-  min-height: 162px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 20px;
-  padding-bottom: 20px;
+  padding-bottom: 24px;
   border-bottom: 1px solid #eaeaea;
+}
+
+.profile-header-action {
+  text-align: left;
+  margin-top: 12px;
+}
+
+.profile-header-action .edit-button,
+.profile-header-action .connect {
+  margin-bottom: 0;
 }
 
 .profile-pic {
@@ -40,26 +51,44 @@
 
 .header-text {
   flex-grow: 1;
+  transform: translateY(4px);
 }
 
 .profile-name {
   margin: 0 0 4px 0;
   font-size: 24px;
+  line-height: 29px;
+  min-height: 29px;
+  color: #222;
 }
 
 .profile-subtext {
   margin: 0;
   color: #666;
   font-size: 14px;
+  line-height: 17px;
+  min-height: 17px;
 }
 
 .profile-occupation {
   margin: 8px 0 0 0;
   font-weight: 600;
+  line-height: 19px;
+  min-height: 19px;
 }
 
 .profile-section {
   margin-top: 30px;
+}
+
+.section-bottom-action {
+  display: block;
+  margin: 15px 0 0;
+}
+
+.section-bottom-link {
+  display: block;
+  text-decoration: none;
 }
 
 .section-header {
@@ -73,6 +102,7 @@
 
 .section-header h2 {
   margin-bottom: 4px;
+  color: #222;
 }
 
 .bio-text {
@@ -83,17 +113,19 @@
 
 
 .edit-button {
-  padding: 6px 12px;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px 12px;
+  color: white;
+  background-color: #0077ff;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
   margin-bottom: 10px;
 }
 
 .edit-button:hover {
-  background-color: #e4e4e4;
+  background-color: #005fcc;
 }
 .edit-form {
   display: flex;
@@ -102,22 +134,28 @@
 }
 
 .edit-input {
-  padding: 8px;
+  box-sizing: border-box;
+  padding: 10px 12px;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
   width: 100%;
   max-width: 300px;
 }
 
+.edit-input:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
 .save-button {
-  background-color: #000;
-  color: #fff;
-  border-color: #000;
+  color: white;
+  background-color: #0077ff;
 }
 
 .save-button:hover {
-  background-color: #333;
+  background-color: #005fcc;
 }
 
 /* TagEms Feed Styles*/
@@ -126,8 +164,10 @@
   padding-right: 5%;
   padding: 20px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   min-width: 650px;
 }
 .post-comments-section{
@@ -141,14 +181,14 @@
   border-radius: 8px;
   background-color: #fff;
 }
-h4{
+.profile-page h4{
 margin-bottom: 9px;
 }
 .feed-header {
   padding: 16px 20px;
   margin: 0;
   font-size: 20px;
-  border-bottom: 1px 
+  border-bottom: 1px solid #eaeaea;
 }
 
 .tag-em-post {
@@ -178,6 +218,22 @@ margin-bottom: 9px;
   background-color: #f9f9f9;
   border-radius: 8px;
 }
+
+.delete-reply-button {
+  padding: 6px 10px;
+  color: #b42318;
+  background: #fff;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.delete-reply-button:hover {
+  color: #fff;
+  background: #b42318;
+}
 .tag-em-meta {
   display: flex;
   align-items: center;
@@ -197,10 +253,20 @@ margin-bottom: 9px;
 font-size: 1.3em;
 }
 .Reply-Box{
-  width:90%;
-  font-size: 12pt;
-  padding: 10px;
-  border-radius: 5px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.Reply-Box:focus {
+  outline: none;
+  border-color: #0077ff;
 }
 .tag-em-actions {
   display: flex;
@@ -209,33 +275,36 @@ font-size: 1.3em;
 }
 
 .action-btn {
-  background: none;
-  border: none;
-  color: #536471;
+  padding: 8px 10px;
+  color: #0077ff;
+  background: white;
+  border: 1px solid #0077ff;
+  border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0;
 }
 
 .action-btn:hover {
-  color: #1d9bf0;
+  color: white;
+  background: #0077ff;
 }
 
 .connect{
-  background-color: #1d9bf0;
-  border-color: #1d9bf0;
-  border: 2px solid #1d9bf0;
-  border-radius: 9999px;
-  cursor: pointer;
-  padding: 8px 20px;
+  padding: 10px 12px;
   color: white;
+  background-color: #0077ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
 }
 
 .connect:hover{
-  background-color: blue;
+  background-color: #005fcc;
 }
 .profile-connections-grid {
     display: flex;
@@ -269,4 +338,95 @@ font-size: 1.3em;
 .connections-missing{
   color:#536471;
   font-style: italic;
+}
+
+.tag-privacy-note,
+.tag-message {
+  margin: 8px 0;
+  color: #536471;
+  font-size: 13px;
+}
+
+.profile-tag-list {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-tag-row,
+.profile-tag-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-tag-row {
+  justify-content: space-between;
+  padding: 8px;
+  background: #f7f7f7;
+  border-radius: 6px;
+}
+
+.profile-tag-row span {
+  overflow-wrap: anywhere;
+}
+
+.profile-tag-row input,
+.profile-tag-add input {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.profile-tag-row input:focus,
+.profile-tag-add input:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
+.profile-tag-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.profile-tag-actions button,
+.profile-tag-add button {
+  padding: 10px 12px;
+  color: white;
+  background: #0077ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.profile-tag-actions button:hover,
+.profile-tag-add button:hover {
+  background: #005fcc;
+}
+
+.profile-tag-actions .secondary-tag-button {
+  color: #333;
+  background: white;
+  border: 1px solid #ccc;
+}
+
+.profile-tag-actions .secondary-tag-button:hover {
+  background: #f2f2f2;
+}
+
+.profile-tag-actions .danger-tag-button {
+  background: #c9362b;
+}
+
+.profile-tag-actions .danger-tag-button:hover {
+  background: #a92b22;
+}
+
+.profile-tag-add {
+  margin-top: 10px;
 }

@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react';
 import { useParams, Link} from 'react-router-dom';
 import './Profile.css';
 
+function normalizeProfile(data) {
+    return {
+        ...data,
+        name: data?.name ?? "",
+        genderIdentity: data?.genderIdentity ?? "",
+        occupation: data?.occupation ?? "",
+        bio: data?.bio ?? "",
+        profilePicUrl: data?.profilePicUrl ?? "",
+        resumeattached: data?.resumeattached ?? null,
+    };
+}
 
 const ProfilePage = () => {
     const { id } = useParams();
@@ -24,27 +35,16 @@ const ProfilePage = () => {
     const [image, handleImage] = useState(null);
     const [resume, setResume] = useState(null);
     const [requestStatus, setRequestStatus] = useState("connect");
+    const [connectionTags, setConnectionTags] = useState([]);
+    const [newConnectionTag, setNewConnectionTag] = useState("");
+    const [editingConnectionTag, setEditingConnectionTag] = useState(null);
+    const [editedConnectionTag, setEditedConnectionTag] = useState("");
+    const [tagMessage, setTagMessage] = useState("");
     const [postContent, setPostContent] = useState("");
     const [, setActiveCommentPostId] = useState(null);
     const [commentText, setCommentText] = useState("");
     const [viewingPost, setViewingPost] = useState(null);
-    const [tagEms, setTagEms] = useState([
-        { //Dummy data
-            id: 10,
-            content: "Omg Scotty the Bear wowowo",
-            timestamp: "2h",
-            Tag: 14,
-            likes: 0,
-            replies: 3
-        },
-        {
-            id: 11,
-            content: "I think we should give Scotty the Bear the key to the Belltower!",
-            timestamp: "May 20",
-            likes: 32,
-            replies: 8
-        }
-    ]);
+    const [tagEms, setTagEms] = useState([]);
     async function fetchPosts() {
             try {
                 const response = await fetch(`http://localhost:5001/api/posts/user/${profileId}`);
@@ -73,7 +73,7 @@ const ProfilePage = () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    setProfile(data);
+                    setProfile(normalizeProfile(data));
                 } else {
                     console.error("Failed to fetch profile");
                 }
@@ -85,6 +85,10 @@ const ProfilePage = () => {
     }, [profileId]);
         useEffect(() => {
         async function fetchConnectionsList() {
+            if (user.id !== Number(profileId)) {
+                setConnections([]);
+                return;
+            }
             try {
                 const response = await fetch(`http://localhost:5001/api/connections/${profileId}`);
                 
@@ -99,7 +103,7 @@ const ProfilePage = () => {
             }
         }
         fetchConnectionsList();
-    }, [profileId]);
+    }, [profileId, user.id]);
 
     useEffect(() => {
         async function fetchConnectionStatus() {
@@ -123,6 +127,25 @@ const ProfilePage = () => {
         if (user.id !== Number(profileId)) {
             fetchConnectionStatus();
         }
+    }, [user.id, profileId]);
+
+    useEffect(() => {
+        async function fetchPrivateConnectionTags() {
+            if (user.id === Number(profileId)) {
+                setConnectionTags([]);
+                return;
+            }
+            try {
+                const response = await fetch(`http://localhost:5001/api/connections/${user.id}`);
+                if (!response.ok) return;
+                const ownConnections = await response.json();
+                const connection = ownConnections.find((item) => Number(item.id) === Number(profileId));
+                setConnectionTags(connection?.tags || []);
+            } catch (err) {
+                console.error("Failed to load connection tags:", err);
+            }
+        }
+        fetchPrivateConnectionTags();
     }, [user.id, profileId]);
 
 
@@ -165,19 +188,15 @@ console.error("Error liking post:", err);
     const handleSaveDetails = async () => {
         console.log("BUTTON CLICKED");
         const formData = new FormData();
-        formData.append("name", profile.name);
-        formData.append("genderIdentity", profile.genderIdentity);
-        formData.append("occupation", profile.occupation);
+        formData.append("name", profile.name ?? "");
+        formData.append("genderIdentity", profile.genderIdentity ?? "");
+        formData.append("occupation", profile.occupation ?? "");
         if (image) {
             formData.append("image", image);
-        } else if(profile.profilePicUrl){
-            formData.append("profilePicUrl",profile.profilePicUrl);
         }
-        formData.append("bio", profile.bio);
+        formData.append("bio", profile.bio ?? "");
         if (resume) {
             formData.append("resume", resume);
-        } else if (profile.resumeattached) {
-            formData.append("resumeattached", profile.resumeattached);
         }
 
         const API_URL = `http://localhost:5001/api/Profile/${profileId}`;
@@ -192,7 +211,7 @@ console.error("Error liking post:", err);
                 console.log("error");
                 return;
             }
-            setProfile(data);
+            setProfile(normalizeProfile(data));
             handleImage(null);
             setResume(null);
         } catch (err) {
@@ -208,7 +227,7 @@ console.error("Error liking post:", err);
         console.log(API_URL);
         const response = await fetch(API_URL);
         const data = await response.json();
-        setProfile(data);
+        setProfile(normalizeProfile(data));
         console.log("FETCHED PROFILE:", data);
         console.log(profile);
     }
@@ -241,6 +260,23 @@ console.error("Error liking post:", err);
             console.log("Error creating comment:", err);
         }
     };
+    const handleDeleteReply = async (replyId) => {
+        try {
+            const response = await fetch(`http://localhost:5001/api/posts/replies/${replyId}`, {
+                method: "DELETE"
+            });
+            if (!response.ok) {
+                console.error("Failed to delete reply");
+                return;
+            }
+            setViewingPost((currentPost) => currentPost ? {
+                ...currentPost,
+                comments: currentPost.comments.filter((comment) => comment.id !== replyId)
+            } : currentPost);
+        } catch (err) {
+            console.error("Error deleting reply:", err);
+        }
+    };
     const handleConnectRequest = async () => {
         try {
             const API_URL = "http://localhost:5001/api/connections/request";
@@ -266,6 +302,47 @@ console.error("Error liking post:", err);
         } catch (err) {
             console.log(err);
         }
+    };
+
+    const addConnectionTag = async () => {
+        const tag = newConnectionTag.trim();
+        if (!tag) return;
+        const response = await fetch("http://localhost:5001/api/jobs/connection-tags", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ connection_user_id: Number(profileId), tag_type: tag }),
+        });
+        const data = await response.json();
+        setTagMessage(data.message || "");
+        if (!response.ok) return;
+        setConnectionTags((tags) => tags.includes(tag) ? tags : [...tags, tag].sort());
+        setNewConnectionTag("");
+    };
+
+    const updateConnectionTag = async (oldTag) => {
+        const newTag = editedConnectionTag.trim();
+        if (!newTag) return;
+        const response = await fetch(`http://localhost:5001/api/jobs/connection-tags/${profileId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ old_tag: oldTag, new_tag: newTag }),
+        });
+        const data = await response.json();
+        setTagMessage(data.message || "");
+        if (!response.ok) return;
+        setConnectionTags((tags) => tags.map((tag) => tag === oldTag ? data.tag : tag).sort());
+        setEditingConnectionTag(null);
+        setEditedConnectionTag("");
+    };
+
+    const deleteConnectionTag = async (tag) => {
+        const response = await fetch(
+            `http://localhost:5001/api/jobs/connection-tags/${user.id}/${profileId}/${encodeURIComponent(tag)}`,
+            { method: "DELETE" }
+        );
+        const data = await response.json();
+        setTagMessage(data.message || "");
+        if (response.ok) setConnectionTags((tags) => tags.filter((item) => item !== tag));
     };
 
     useEffect(() => {
@@ -307,9 +384,8 @@ console.error("Error liking post:", err);
                         alt="Profile"
                         className="profile-pic"
                     />
-                    {user.id === Number(profileId) ? (
-                        <div className="header-text">
-                            {isEditingDetails ? (
+                    <div className="header-text">
+                        {user.id === Number(profileId) && isEditingDetails ? (
                                 <div className="edit-form">
                                     <input
                                         type="text"
@@ -346,59 +422,46 @@ console.error("Error liking post:", err);
                                         className="edit-input"
                                     />
                                 </div>
-                            ) : (
-                                <>
-                                    <h1 className="profile-name">{profile.name}</h1>
-                                    <p className="profile-subtext">{profile.genderIdentity}</p>
-                                    <p className="profile-occupation">{profile.occupation}</p>
-                                </>
-                            )}
-                        </div>) : (
-                        <div className="header-text">
+                        ) : (
+                            <>
                             <h1 className="profile-name">{profile.name}</h1>
                             <p className="profile-subtext">{profile.genderIdentity}</p>
                             <p className="profile-occupation">{profile.occupation}</p>
+                            </>
+                        )}
+                        <div className="profile-header-action">
+                            {user.id === Number(profileId) ? (isEditingDetails ? (
+                                <button className="edit-button save-button" onClick={handleSaveDetails}>
+                                    Save Details
+                                </button>
+                            ) : (
+                                <button className="edit-button" onClick={() => {
+                                    console.log("edit clicked");
+                                    setIsEditingDetails(true);
+                                }}
+                                >
+                                    Edit Details
+                                </button>
+                            )) : (
+                                <button
+                                    className="connect"
+                                    onClick={handleConnectRequest}
+                                    disabled={
+                                        requestStatus === "pending" ||
+                                        requestStatus === "connected" ||
+                                        requestStatus === "accepted"
+                                    }
+                                >
+                                    {requestStatus === "connected" || requestStatus === "accepted" ? "Connected" : requestStatus === "pending" ? "Pending" : "Connect"}
+                                </button>
+                            )}
                         </div>
-                    )}
-                    {user.id === Number(profileId) ? (isEditingDetails ? (
-                        <button className="edit-button save-button" onClick={handleSaveDetails}>
-                            Save Details
-                        </button>
-                    ) : (
-                        <button className="edit-button" onClick={() => {
-                            console.log("edit clicked");
-                            setIsEditingDetails(true);
-                        }}
-                        >
-                            Edit Details
-                        </button>
-                    )) : (
-                        <button
-                            className="connect"
-                            onClick={handleConnectRequest}
-                            disabled={
-                                requestStatus === "pending" ||
-                                requestStatus === "connected" ||
-                                requestStatus === "accepted"
-                            }
-                        >
-                            {requestStatus === "connected" || requestStatus === "accepted" ? "Connected" : requestStatus === "pending" ? "Pending" : "Connect"}
-                        </button>
-                    )}
+                    </div>
                 </header>
 
                 <section className="profile-section">
                     <div className="section-header">
                         <h2>Bio</h2>
-                        {user.id === Number(profileId) ? (isEditingBio ? (
-                            <button className="edit-button save-button" onClick={handleSaveDetails}>
-                                Save Bio
-                            </button>
-                        ) : (
-                            <button className="edit-button" onClick={() => setIsEditingBio(true)}>
-                                Edit Bio
-                            </button>
-                        )) : null}
                     </div>
                     {user.id === Number(profileId) ? (isEditingBio ? (
                         <input
@@ -412,6 +475,15 @@ console.error("Error liking post:", err);
                     ) : (
                         <p className="bio-text">{profile.bio}</p>
                     )) : (<p className="bio-text">{profile.bio}</p>)}
+                    {user.id === Number(profileId) ? (isEditingBio ? (
+                        <button className="edit-button section-bottom-action save-button" onClick={handleSaveDetails}>
+                            Save Bio
+                        </button>
+                    ) : (
+                        <button className="edit-button section-bottom-action" onClick={() => setIsEditingBio(true)}>
+                            Edit Bio
+                        </button>
+                    )) : null}
                 </section>
 
                 <section className="profile-section">
@@ -419,41 +491,96 @@ console.error("Error liking post:", err);
                         <h2>Resume</h2>
                     </div>
                     {user.id === Number(profileId) ? (isEditingResume ? (
-                        <button className="edit-button save-button" onClick={handleSaveDetails}>
-                            Save Resume
-                        </button>
+                        <>
+                            <input
+                                type="file"
+                                name="resume"
+                                onChange={(e) => setResume(e.target.files[0])}
+                                className="edit-input"
+                                accept="application/pdf,.pdf"
+                            />
+                            <button className="edit-button section-bottom-action save-button" onClick={handleSaveDetails}>
+                                Save Resume
+                            </button>
+                        </>
                     ) : (
-                        <button className="edit-button" onClick={() => setIsEditingResume(true)}>
-                            Change Resume
-                        </button>
+                        <>
+                            {profile.resumeattached ? (
+                                <p className="resume-text">
+                                    <a
+                                        href={`${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5001" : "")}${profile.resumeattached}`}
+                                        target="_blank"
+                                    >
+                                        Resume
+                                    </a>
+                                </p>
+                            ) : <p className="resume-text">No resume uploaded</p>}
+                            <button className="edit-button section-bottom-action" onClick={() => setIsEditingResume(true)}>
+                                {profile.resumeattached ? "Change Resume" : "Upload Resume"}
+                            </button>
+                        </>
                     )) : null}
-                    {user.id === Number(profileId) ? (isEditingResume ? (
-                        <input
-                            type="file"
-                            name="resume"
-                            onChange={(e) => setResume(e.target.files[0])}
-                            className="edit-input"
-                            accept="application/pdf,.pdf"
-                        />
-                    ) : profile.resumeattached ? (
-                        <p className="resume-text">
-                            <a 
-                                href={`${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5001" : "")}${profile.resumeattached}`}
-                                target="_blank"
-                            >
-                                Resume
-                            </a>
-                        </p>
-                    ) : <p className="resume-text">No resume uploaded</p>) : null}
                 </section>
-                <section className="profile-section">
+                {user.id !== Number(profileId) &&
+                  (requestStatus === "connected" || requestStatus === "accepted") && (
+                    <section className="profile-section connection-tag-manager">
+                        <div className="section-header">
+                            <h2>Your Tags</h2>
+                        </div>
+                        <p className="tag-privacy-note">Only you can see these tags.</p>
+
+                        <div className="profile-tag-list">
+                            {connectionTags.length > 0 ? connectionTags.map((tag) => (
+                                <div className="profile-tag-row" key={tag}>
+                                    {editingConnectionTag === tag ? (
+                                        <input
+                                            value={editedConnectionTag}
+                                            onChange={(event) => setEditedConnectionTag(event.target.value)}
+                                            aria-label={`Edit ${tag} tag`}
+                                            maxLength={255}
+                                        />
+                                    ) : (
+                                        <span>{tag}</span>
+                                    )}
+
+                                    <div className="profile-tag-actions">
+                                        {editingConnectionTag === tag ? (
+                                            <>
+                                                <button type="button" onClick={() => updateConnectionTag(tag)}>Save</button>
+                                                <button className="secondary-tag-button" type="button" onClick={() => {
+                                                    setEditingConnectionTag(null);
+                                                    setEditedConnectionTag("");
+                                                }}>Cancel</button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button type="button" onClick={() => {
+                                                    setEditingConnectionTag(tag);
+                                                    setEditedConnectionTag(tag);
+                                                }}>Edit</button>
+                                                <button className="danger-tag-button" type="button" onClick={() => deleteConnectionTag(tag)}>Delete</button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )) : <p className="tag-privacy-note">No tags added yet.</p>}
+                        </div>
+
+                        <div className="profile-tag-add">
+                            <input
+                                value={newConnectionTag}
+                                onChange={(event) => setNewConnectionTag(event.target.value)}
+                                placeholder="Add a tag"
+                                maxLength={255}
+                            />
+                            <button type="button" onClick={addConnectionTag}>Add Tag</button>
+                        </div>
+                        {tagMessage && <p className="tag-message">{tagMessage}</p>}
+                    </section>
+                )}
+                {user.id === Number(profileId) && <section className="profile-section">
                     <div className="section-header">
                         <h2>Network</h2>
-                        <Link to="/Connections">
-                            <button className="edit-button">
-                            Manage Network
-                            </button>
-                        </Link>
                     </div>
                     <p>{profile.name} has {connections.length} people in their network!</p>
                     
@@ -478,7 +605,12 @@ console.error("Error liking post:", err);
                             <p className='connections-missing'>No connections to display yet.</p>
                         )}
                     </div>
-                </section>
+                    <Link className="section-bottom-link" to="/Connections">
+                        <button className="edit-button section-bottom-action">
+                            Manage Network
+                        </button>
+                    </Link>
+                </section>}
 
             </div>
             <div className="My-TagEms">
@@ -521,6 +653,8 @@ console.error("Error liking post:", err);
                                         {viewingPost.comments.map((comment) => (
                                             <div key={`comment-${comment.id}`} className="comment-item">
                                                 <div className="tag-em-meta">
+                                                    <strong>{comment.user_name}</strong>
+                                                    <span className="tag-em-dot">·</span>
                                                     <span className="tag-em-time">
                                                         {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : "Just now"}
                                                     </span>
@@ -528,6 +662,15 @@ console.error("Error liking post:", err);
                                                 <p className="tag-em-text">
                                                     {comment.content}
                                                 </p>
+                                                {Number(comment.user_id) === Number(user.id) && (
+                                                    <button
+                                                        type="button"
+                                                        className="delete-reply-button"
+                                                        onClick={() => handleDeleteReply(comment.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -552,7 +695,7 @@ console.error("Error liking post:", err);
                             </form>
                         </div>
                     )}
-                        <h3>Comment on {profile.name}'s Page!</h3>
+                        <h3>{tagEms.length > 0 ? "Posts" : `${profile.name} has no current Posts`}</h3>
                         <div className="tag-ems-list"> 
                             {tagEms.map((post, index) => (
                                 <article key={`post-${post.id}-${index}`} className="tag-em-post">

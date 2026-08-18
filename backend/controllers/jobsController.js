@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import { cleanString } from "../utils/validation.js";
+import { cleanPositiveIntegerArray, cleanString, cleanStringArray } from "../utils/validation.js";
 
 export async function getJobsForUser(req, res) {
   try {
@@ -95,8 +95,10 @@ export async function createJob(req, res) {
     const safeCompany = cleanString(company, { max: 255 });
     const safeLocation = cleanString(location, { max: 255 });
     const safeDescription = cleanString(description, { max: 5000 });
-    if (!safeTitle || !safeCompany || !safeLocation || !safeDescription) {
-      return res.status(400).json({ message: "Missing required fields" });
+    const safeUserIds = cleanPositiveIntegerArray(selectedUserIds, { max: 100 });
+    const safeTagTypes = cleanStringArray(selectedTagTypes, { maxItems: 50, maxLength: 255 });
+    if (!safeTitle || !safeCompany || !safeLocation || !safeDescription || !safeUserIds || !safeTagTypes) {
+      return res.status(400).json({ message: "Invalid job details or recipient selection" });
     }
     client = await pool.connect();
     await client.query("BEGIN");
@@ -110,46 +112,27 @@ export async function createJob(req, res) {
       [safeTitle, safeCompany, safeLocation, safeDescription, sender_id]
     );
     const jobId = newJob.rows[0].id;
-    const recipients = new Set();
-
-    if (selectedUserIds && selectedUserIds.length > 0) {
-      for (let i = 0; i < selectedUserIds.length; i++) {
-        const recipientId = Number(selectedUserIds[i]);
-        if (Number.isInteger(recipientId) && recipientId > 0) recipients.add(recipientId);
-      }
-    }
-    if (selectedTagTypes && selectedTagTypes.length > 0) {
-      for (let i = 0; i < selectedTagTypes.length; i++) {
-        const taggedUsers = await client.query(
-          `
-          SELECT connection_user_id
-          FROM connection_tags
-          WHERE owner_id = $1
-          AND tag_type = $2
-          `,
-          [sender_id, selectedTagTypes[i]]
-        );
-
-        for (let j = 0; j < taggedUsers.rows.length; j++) {
-          recipients.add(Number(taggedUsers.rows[j].connection_user_id));
-        }
-      }
-    }
-
-    for (const recipientId of recipients) {
-      await client.query(
-        `
-        INSERT INTO job_recipients (job_id, recipient_id)
-        SELECT $1, $2
-        WHERE EXISTS (
-          SELECT 1 FROM connections
-          WHERE (user1_id = $3 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $3)
-        )
-        ON CONFLICT DO NOTHING
-        `,
-        [jobId, recipientId, sender_id]
-      );
-    }
+    await client.query(
+      `WITH requested_recipients AS (
+         SELECT UNNEST($2::integer[]) AS recipient_id
+         UNION
+         SELECT connection_user_id
+         FROM connection_tags
+         WHERE owner_id = $3
+           AND tag_type = ANY($4::varchar[])
+       )
+       INSERT INTO job_recipients (job_id, recipient_id)
+       SELECT $1, requested.recipient_id
+       FROM requested_recipients requested
+       WHERE EXISTS (
+         SELECT 1
+         FROM connections
+         WHERE (user1_id = $3 AND user2_id = requested.recipient_id)
+            OR (user1_id = requested.recipient_id AND user2_id = $3)
+       )
+       ON CONFLICT DO NOTHING`,
+      [jobId, safeUserIds, sender_id, safeTagTypes]
+    );
 
     await client.query("COMMIT");
 
@@ -237,21 +220,61 @@ export async function setConnectionTag(req, res) {
   }
 }
 
+export async function updateConnectionTag(req, res) {
+  try {
+    const ownerId = req.user.id;
+    const connectionUserId = Number(req.params.connectionUserId);
+    const oldTag = cleanString(req.body.old_tag, { max: 255 });
+    const newTag = cleanString(req.body.new_tag, { max: 255 });
+
+    if (!Number.isInteger(connectionUserId) || connectionUserId <= 0 || !oldTag || !newTag) {
+      return res.status(400).json({ message: "Invalid tag details" });
+    }
+
+    const updated = await pool.query(
+      `UPDATE connection_tags
+       SET tag_type = $1
+       WHERE owner_id = $2
+         AND connection_user_id = $3
+         AND tag_type = $4
+       RETURNING tag_type`,
+      [newTag, ownerId, connectionUserId, oldTag]
+    );
+
+    if (updated.rows.length === 0) {
+      return res.status(404).json({ message: "Tag not found" });
+    }
+
+    res.json({ message: "Connection tag updated", tag: updated.rows[0].tag_type });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ message: "That tag already exists" });
+    }
+    console.log(err);
+    res.status(500).json({ message: "Database error updating tag" });
+  }
+}
+
 export async function deleteConnectionTag(req, res) {
   try {
     const { connectionUserId, tagType } = req.params;
     const ownerId = req.user.id;
     if (Number(req.params.ownerId) !== ownerId) return res.status(403).json({ message: "Access denied" });
 
-    await pool.query(
+    const deleted = await pool.query(
       `
       DELETE FROM connection_tags
       WHERE owner_id = $1
       AND connection_user_id = $2
       AND tag_type = $3
+      RETURNING id
       `,
       [ownerId, connectionUserId, tagType]
     );
+
+    if (deleted.rows.length === 0) {
+      return res.status(404).json({ message: "Tag not found" });
+    }
 
     res.json({ message: "Connection tag deleted" });
   } catch (err) {

@@ -25,14 +25,32 @@ export async function sendRequest(req, res) {
     if (sender_id === receiver_id) {
       return res.status(400).json({ message: "You cannot connect with yourself" });
     }
-    await pool.query(
-      `INSERT INTO "connectionRequests"
-       (sender_id, receiver_id, status)
-       VALUES ($1, $2, $3)`,
-      [sender_id, receiver_id, "pending"]
+    const created = await pool.query(
+      `INSERT INTO "connectionRequests" (sender_id, receiver_id, status)
+       SELECT $1, candidate.id, 'pending'
+       FROM users candidate
+       WHERE candidate.id = $2
+         AND NOT EXISTS (
+           SELECT 1 FROM connections
+           WHERE user1_id = LEAST($1, $2) AND user2_id = GREATEST($1, $2)
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM "connectionRequests"
+           WHERE status = 'pending'
+             AND LEAST(sender_id, receiver_id) = LEAST($1, $2)
+             AND GREATEST(sender_id, receiver_id) = GREATEST($1, $2)
+         )
+       RETURNING id`,
+      [sender_id, receiver_id]
     );
+    if (created.rows.length === 0) {
+      return res.status(409).json({ message: "User not found, request already pending, or users already connected" });
+    }
     res.status(201).json({ message: "Request sent" });
   } catch(err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ message: "A connection request is already pending" });
+    }
     console.log(err);
     res.status(500).json({ message: "Database error during sending request" });
   }
@@ -61,6 +79,7 @@ export async function getRequests(req, res) {
     res.json(requests.rows);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: "Database error" });
   }
 }
 
@@ -198,18 +217,20 @@ export async function getConnections(req, res) {
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ message: "Invalid user" });
     }
-    const includePrivateTags = id === req.user.id;
+    if (id !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const result = await pool.query(
       `SELECT 
         u.id,
         u.name,
         u."profilePicUrl",
-        ${includePrivateTags ? `COALESCE(
+        COALESCE(
           ARRAY_AGG(DISTINCT ct.tag_type ORDER BY ct.tag_type)
             FILTER (WHERE ct.tag_type IS NOT NULL),
           ARRAY[]::varchar[]
-        )` : "ARRAY[]::varchar[]"} AS tags
+        ) AS tags
       FROM connections c
       JOIN users u
       ON u.id = CASE
@@ -217,7 +238,7 @@ export async function getConnections(req, res) {
         ELSE c.user1_id
       END
       LEFT JOIN connection_tags ct
-      ON ${includePrivateTags ? "ct.owner_id = $1" : "FALSE"}
+      ON ct.owner_id = $1
       AND ct.connection_user_id = u.id
       WHERE c.user1_id = $1 OR c.user2_id = $1
       GROUP BY u.id, u.name, u."profilePicUrl"

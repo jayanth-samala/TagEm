@@ -16,8 +16,10 @@ import jobsRouter from "./routes/jobsRoutes.js";
 import { authenticateToken } from "./middleware/auth.js";
 import { csrfProtection } from "./middleware/csrf.js";
 import { errorHandler, rateLimit, requestLogger, securityHeaders } from "./middleware/security.js";
+import { getJwtSecret } from "./config/securityEnvironment.js";
 
 dotenv.config();
+getJwtSecret();
 
 const app = express();
 const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "uploads");

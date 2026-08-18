@@ -1,18 +1,32 @@
 import pool from "../config/db.js";
-import { cleanString } from "../utils/validation.js";
+import { cleanString, parseOptionalPositiveInteger } from "../utils/validation.js";
 
 export async function createPosts(req, res) {
     try {
         const user_id = req.user.id;
         const content = cleanString(req.body.content, { max: 5000 });
-        const parent_post_id = req.body.parent_post_id || null;
-        if (!content) {
-            return res.status(400).json({ message: "Content cannot be empty" });
+        const parent_post_id = parseOptionalPositiveInteger(req.body.parent_post_id);
+        if (!content || parent_post_id === undefined) {
+            return res.status(400).json({ message: "Invalid post content or parent post" });
         }
-        const result = await pool.query(
-            `INSERT INTO posts (user_id, content, parent_post_id) VALUES ($1, $2, $3) RETURNING *`,
-            [user_id, content, parent_post_id]
-        );
+        const result = parent_post_id === null
+            ? await pool.query(
+                `INSERT INTO posts (user_id, content, parent_post_id)
+                 VALUES ($1, $2, NULL)
+                 RETURNING *`,
+                [user_id, content]
+            )
+            : await pool.query(
+                `INSERT INTO posts (user_id, content, parent_post_id)
+                 SELECT $1, $2, id
+                 FROM posts
+                 WHERE id = $3 AND parent_post_id IS NULL
+                 RETURNING *`,
+                [user_id, content, parent_post_id]
+            );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Parent post not found" });
+        }
         console.log("Post created successfully");
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -47,7 +61,7 @@ export async function getPostsById(req, res) {
     try {
         const Id = req.params.id;
         const result = await pool.query(
-            'SELECT * FROM posts WHERE id = $1',
+            'SELECT * FROM posts WHERE id = $1 AND parent_post_id IS NULL',
             [Id]
         );
         if (result.rows.length === 0) {
@@ -55,7 +69,11 @@ export async function getPostsById(req, res) {
         }
         const post = result.rows[0];
         const commentsResult = await pool.query(
-            'SELECT * FROM posts WHERE parent_post_id = $1 ORDER BY created_at ASC',
+            `SELECT p.*, u.name AS user_name
+             FROM posts p
+             JOIN users u ON u.id = p.user_id
+             WHERE p.parent_post_id = $1
+             ORDER BY p.created_at ASC`,
             [Id]
         );
         post.comments = commentsResult.rows;
@@ -63,6 +81,32 @@ export async function getPostsById(req, res) {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+export async function deleteReply(req, res) {
+    try {
+        const replyId = Number(req.params.id);
+        if (!Number.isInteger(replyId) || replyId <= 0) {
+            return res.status(400).json({ message: "Invalid reply" });
+        }
+
+        const deleted = await pool.query(
+            `DELETE FROM posts
+             WHERE id = $1
+               AND user_id = $2
+               AND parent_post_id IS NOT NULL
+             RETURNING id`,
+            [replyId, req.user.id]
+        );
+
+        if (deleted.rows.length === 0) {
+            return res.status(404).json({ message: "Reply not found" });
+        }
+
+        return res.json({ message: "Reply deleted" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 export async function likePost(req, res) {

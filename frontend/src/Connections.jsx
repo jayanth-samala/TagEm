@@ -184,14 +184,11 @@ function Connections() {
   }
 
   return (
-    <main className="connections-page">
-      <h1>Connections</h1>
-
-      <section className="connections-toolbar">
-        <div className="Search">
+    <div className="connections-page">
+      <div className="Search">
           <input
             type="text"
-            placeholder="Search for people to connect with"
+            placeholder="Search to connect..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="input"
@@ -200,8 +197,7 @@ function Connections() {
           {search && users.length > 0 && (
             <div className="Dropdown">
               {users.map((person) => (
-                <button
-                  type="button"
+                <div
                   className="person"
                   key={person.id}
                   onClick={() => navigate(`/profile/${person.id}`)}
@@ -211,21 +207,19 @@ function Connections() {
                       person.profilePicUrl ||
                       "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"
                     }
-                    alt=""
+                    alt={person.name}
                   />
 
-                  <span>{person.name}</span>
-                </button>
+                  <h3>{person.name}</h3>
+                </div>
               ))}
             </div>
           )}
-        </div>
+      </div>
 
-        <div className="filter-buttons">
-          <button className={!showRequests ? "active" : ""} onClick={displayConnections}>All Connections</button>
-          <button className={showRequests ? "active" : ""} onClick={displayRequests}>Requests</button>
-        </div>
-      </section>
+      <div className="connections-header">
+        <h1>Connections</h1>
+      </div>
 
       <div className="filter-buttons">
         <button onClick={displayConnections}>All</button>
@@ -290,7 +284,7 @@ function Connections() {
                 <div className="tag-box">
                   <input
                     type="text"
-                    placeholder="Create tag"
+                    placeholder="Add tag"
                     value={tagInputs[connection.id] || ""}
                     onChange={(e) => handleTagChange(connection.id, e.target.value)}
                   />
@@ -302,7 +296,7 @@ function Connections() {
               </article>
             ))}
       </div>
-    </main>
+    </div>
   );
 }
 

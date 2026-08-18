@@ -1,5 +1,5 @@
 import express from "express";
-import {createPosts, getPosts, getPostsById,getPostsByUserId,likePost, /*updatePost*/ /*deletePost*/} from "../controllers/postsController.js";
+import {createPosts, deleteReply, getPosts, getPostsById,getPostsByUserId,likePost, /*updatePost*/ /*deletePost*/} from "../controllers/postsController.js";
 import multer from "multer";
 import { rateLimit } from "../middleware/security.js";
 
@@ -18,6 +18,7 @@ router.get("/", getPosts);
 router.get("/user/:userId", getPostsByUserId);
 router.get("/:id", getPostsById);
 router.put("/:id/like", postMutationLimit, likePost)
+router.delete("/replies/:id", postMutationLimit, deleteReply);
 //router.put("/:id", upload.single("image"), updatePost);
 //router.delete("/:id", deletePost);
 
