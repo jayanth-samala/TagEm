@@ -277,6 +277,28 @@ console.error("Error liking post:", err);
             console.error("Error deleting reply:", err);
         }
     };
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm(
+            "Permanently delete your account and all associated data? This cannot be undone."
+        );
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch("http://localhost:5001/api/users/account", {
+                method: "DELETE"
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                window.alert(data.message || "Unable to delete account");
+                return;
+            }
+            localStorage.removeItem("user");
+            window.location.assign("/login");
+        } catch (error) {
+            console.error("Account deletion error:", error);
+            window.alert("Unable to delete account");
+        }
+    };
     const handleConnectRequest = async () => {
         try {
             const API_URL = "http://localhost:5001/api/connections/request";
@@ -611,6 +633,18 @@ console.error("Error liking post:", err);
                         </button>
                     </Link>
                 </section>}
+
+                {user.id === Number(profileId) && (
+                    <section className="profile-section danger-zone">
+                        <div className="section-header">
+                            <h2>Delete Account</h2>
+                        </div>
+                        <p>Permanently delete your account and all associated data.</p>
+                        <button type="button" className="delete-account-button" onClick={handleDeleteAccount}>
+                            Delete My Account
+                        </button>
+                    </section>
+                )}
 
             </div>
             <div className="My-TagEms">
