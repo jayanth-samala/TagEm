@@ -120,4 +120,44 @@
 .meetup-card-link {
   text-decoration: none;
   color: inherit;
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .meetups-page {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 24px 12px;
+  }
+
+  .meetups-page h1 {
+    margin-bottom: 20px;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .filters input,
+  .create-meetup-form input,
+  .create-meetup-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .meetup-card,
+  .create-meetup-section {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .create-meetup-section {
+    margin-top: 24px;
+  }
 }
