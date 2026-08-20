@@ -1,0 +1,204 @@
+.connections-page {
+  padding: 40px;
+  background-color: #f3f2ef;
+  min-height: 100vh;
+}
+
+.connections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.connections-header h1 {
+  font-size: 32px;
+  color: #222;
+}
+
+.connections-header input {
+  width: 280px;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  outline: none;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.filter-buttons button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 20px;
+  background-color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.filter-buttons button:hover {
+  background-color: #0a66c2;
+  color: white;
+}
+
+.connections-grid {
+  display: grid;
+ grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+
+.connection-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid #ddd;
+  width: 300px;
+}
+
+.connection-card img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 14px;
+}
+
+.connection-card h3 {
+  margin: 8px 0;
+  font-size: 20px;
+}
+
+.connection-card p {
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.connection-card span {
+  font-size: 14px;
+  color: #777;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.card-buttons button {
+  flex: 1;
+  padding: 9px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.message-btn {
+  background-color: #0a66c2;
+  color: white;
+  border: none;
+}
+
+.remove-btn {
+  background-color: white;
+  color: #555;
+  border: 1px solid #aaa;
+}
+
+.Search{
+  display: flex;
+  justify-content: center;
+  position: relative;
+
+}
+
+.input{
+  width: 500px;
+  height: 30px;
+  border-radius: 30px;
+  border: ghostwhite;
+  padding-left: 20px;
+}
+
+.Dropdown {
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 37px;
+  z-index: 1;
+  width: 500px;
+  border-radius: 20px;
+
+}
+
+.Dropdown h3{
+  padding: 20px;
+  margin: -2px;
+}
+
+.Dropdown .person:hover {
+  background-color: gainsboro;
+}
+
+.person{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-left: 1rem;
+}
+
+.person img{
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+}
+
+.request-card {
+  width: 260px;
+  padding: 16px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  text-align: center;
+}
+
+.request-pic {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.accept-btn {
+  background-color: #1d9bf0;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+}
+
+.tag-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag-box input {
+  flex: 1;
+  padding: 3px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+}
+
+.tag-box button {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #0077ff;
+  color: white;
+  cursor: pointer;
+}

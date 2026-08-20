@@ -1,0 +1,76 @@
+.meetup-details-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
+}
+
+.meetup-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+}
+
+.meetup-details-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.meetup-details-card h1 {
+  margin-top: 0;
+  color: #0077ff;
+}
+
+.meetup-details-card p {
+  margin: 10px 0;
+  color: #333;
+}
+
+.suggested-events {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.suggested-events h2 {
+  margin-top: 0;
+  color: #0077ff;
+  font-size: 25px;
+}
+
+.suggested-subtitle {
+  margin-bottom: 15px;
+}
+
+.suggested-event-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+}
+
+.suggested-event-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #0077ff;
+}
+
+.suggested-event-card p {
+  margin: 6px 0;
+}
+
+@media (max-width: 800px) {
+  .meetup-main {
+    grid-template-columns: 1fr;
+  }
+}

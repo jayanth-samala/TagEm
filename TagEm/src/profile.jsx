@@ -1,0 +1,612 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link} from 'react-router-dom';
+import Connections from './Connections';
+import './Profile.css';
+
+
+const ProfilePage = () => {
+    const { id } = useParams();
+    const user = JSON.parse(localStorage.getItem("user"));
+    const profileId = id || user.id;
+    console.log(user);
+    const [profile, setProfile] = useState({
+        name: "",
+        genderIdentity: "",
+        occupation: "",
+        profilePicUrl: "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png",
+        bio: "",
+        resumeattached: null
+    });
+    
+    const [connections, setConnections] = useState([]);
+    const [isEditingDetails, setIsEditingDetails] = useState(false);
+    const [isEditingBio, setIsEditingBio] = useState(false);
+    const [isEditingResume, setIsEditingResume] = useState(false);
+    const [error, setError] = useState("");
+    const [image, handleImage] = useState(null);
+    const [resume, setResume] = useState(null);
+    const [requestStatus, setRequestStatus] = useState("connect");
+    const [postContent, setPostContent] = useState("");
+    const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+    const [commentText, setCommentText] = useState("");
+    const [viewingPost, setViewingPost] = useState(null);
+    const [tagEms, setTagEms] = useState([
+        { //Dummy data
+            id: 10,
+            content: "Omg Scotty the Bear wowowo",
+            timestamp: "2h",
+            Tag: 14,
+            likes: 0,
+            replies: 3
+        },
+        {
+            id: 11,
+            content: "I think we should give Scotty the Bear the key to the Belltower!",
+            timestamp: "May 20",
+            likes: 32,
+            replies: 8
+        }
+    ]);
+    async function fetchPosts() {
+            try {
+                const response = await fetch(`http://localhost:5001/api/posts/user/${profileId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setTagEms(data);
+                } else {
+                    console.error("Failed to fetch posts");
+                }
+            } catch (err) {
+                console.error("Network error:", err);
+            }
+        }
+    useEffect(() => {
+        fetchPosts();
+    }, [profileId]);
+    useEffect(() => {
+        async function fetchProfileData() {
+            const storedUserString = localStorage.getItem("user");
+            if (!storedUserString) {
+                console.log("No user is logged in");
+                return;
+            }
+            const storedUser = JSON.parse(storedUserString);
+            try {
+                const response = await fetch(`http://localhost:5001/api/Profile/${profileId}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setProfile(data);
+                } else {
+                    console.error("Failed to fetch profile");
+                }
+            } catch (err) {
+                console.error("Network error:", err);
+            }
+        }
+        fetchProfileData();
+    }, [profileId]);
+        useEffect(() => {
+        async function fetchConnectionsList() {
+            try {
+                const response = await fetch(`http://localhost:5001/api/connections/${profileId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setConnections(data);
+                } else {
+                    console.error("Failed to fetch connections");
+                }
+            } catch (err) {
+                console.error("Network error:", err);
+            }
+        }
+        fetchConnectionsList();
+    }, [profileId]);
+
+    useEffect(() => {
+        async function fetchConnectionStatus() {
+
+            try {
+                const response = await fetch(
+                    `http://localhost:5001/api/connections/status/${user.id}/${profileId}`
+                );
+
+                const data = await response.json();
+                console.log("STATUS DATA:", data);
+
+                if (response.ok) {
+                    setRequestStatus(data.status);
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        if (user.id !== Number(profileId)) {
+            fetchConnectionStatus();
+        }
+    }, [user.id, profileId]);
+
+
+    const handleInputChange = (e) => {
+        console.log("hi");
+        setProfile({
+            ...profile,
+            [e.target.name]: e.target.value
+        });
+    };
+    const handleViewPost = async (postId) => {
+        try {
+
+            const response = await fetch(`http://localhost:5001/api/posts/${postId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setViewingPost(data);
+            } else {
+                console.error("Failed to fetch single post");
+            }
+        } catch (err) {
+            console.error("Network error:", err);
+        }
+    };
+    const handleLike = async (postId) => {
+        try {
+            const response = await fetch(`http://localhost:5001/api/posts/${postId}/like`, {method: 'PUT'});
+        if (response.ok){
+                setTagEms(prevPosts => prevPosts.map(post => 
+                        post.id === postId ? {...post, likes_count: (post.likes_count || post.likes || 0) + 1} : post
+                    ));
+            }
+        }
+
+     catch(err) {
+console.error("Error liking post:", err);
+
+        }    }
+    const handleSaveDetails = async () => {
+        console.log("BUTTON CLICKED");
+        const formData = new FormData();
+        formData.append("name", profile.name);
+        formData.append("genderIdentity", profile.genderIdentity);
+        formData.append("occupation", profile.occupation);
+        if (image) {
+            formData.append("image", image);
+        } else if(profile.profilePicUrl){
+            formData.append("profilePicUrl",profile.profilePicUrl);
+        }
+        formData.append("bio", profile.bio);
+        if (resume) {
+            formData.append("resume", resume);
+        } else if (profile.resumeattached) {
+            formData.append("resumeattached", profile.resumeattached);
+        }
+
+        const API_URL = `http://localhost:5001/api/Profile/${profileId}`;
+        try {
+            const response = await fetch(API_URL, {
+                method: 'PUT',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                console.log("error");
+                return;
+            }
+            setProfile(data);
+            handleImage(null);
+            setResume(null);
+        } catch (err) {
+            console.log(err);
+        }
+
+        setIsEditingDetails(false);
+        setIsEditingBio(false);
+        setIsEditingResume(false);
+    };
+    const handleFetch = async () => {
+        const API_URL = `http://localhost:5001/api/Profile/${profileId}`;
+        console.log(API_URL);
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        setProfile(data);
+        console.log("FETCHED PROFILE:", data);
+        console.log(profile);
+    }
+    const handleCommentSubmit = async (postId) => {
+        if (!commentText.trim()) return;
+
+        try {
+            const response = await fetch ("http://localhost:5001/api/posts", {
+                method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        body: JSON.stringify({
+            user_id: user.id,
+            content: commentText,
+            parent_post_id: postId
+        })
+    });
+    if (response.ok){
+        setCommentText("");
+        setActiveCommentPostId(null);
+            if (viewingPost) {
+                handleViewPost(viewingPost.id); 
+            } else {
+                fetchPosts(); 
+                }
+                } else{
+        console.log("Failed to create comment");
+    }
+        } catch(err){
+            console.log("Error creating comment:", err);
+        }
+    };
+    const handleConnectRequest = async () => {
+        try {
+            const API_URL = "http://localhost:5001/api/connections/request";
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    sender_id: user.id,
+                    receiver_id: profileId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.log(data.message);
+                return;
+            }
+
+            alert("Connection request sent!");
+            setRequestStatus("pending");
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useEffect(() => {
+        handleFetch();
+        window.scrollTo(0,0);
+    }, [profileId])
+    const handleCreatePost = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch("http://localhost:5001/api/posts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    content: postContent,
+                    parent_post_id: null // Head post
+                })
+            });
+            if (!response.ok) {
+                console.log("Failed to create post");
+            }
+            const data = await response.json();
+            console.log("Created post:", data);
+            setTagEms([data, ...tagEms]);
+            setPostContent(""); 
+            handleFetch(); 
+        } catch (err) {
+            console.log("Error creating post:", err);
+        }
+    };
+    return (
+        <div className="profile-page">
+            <div className="profile-container">
+
+                <header className="profile-header">
+                    <img
+                        src={image ? URL.createObjectURL(image) : profile.profilePicUrl || "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"}
+                        alt="Profile"
+                        className="profile-pic"
+                    />
+                    {user.id === Number(profileId) ? (
+                        <div className="header-text">
+                            {isEditingDetails ? (
+                                <div className="edit-form">
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={profile.name || ""}
+                                        onChange={handleInputChange}
+                                        className="edit-input"
+                                        placeholder="Full Name"
+                                    />
+                                    <input
+                                        type="text"
+                                        name="genderIdentity"
+                                        value={profile.genderIdentity || ""}
+                                        onChange={handleInputChange}
+                                        className="edit-input"
+                                        placeholder="Gender Identity"
+                                    />
+                                    <input
+                                        type="text"
+                                        name="occupation"
+                                        value={profile.occupation || ""}
+                                        onChange={handleInputChange}
+                                        className="edit-input"
+                                        placeholder="Occupation"
+                                    />
+                                    <input
+                                        type="file"
+                                        name="Profile Picture"
+                                        accept="image/png, image/jpeg"
+                                        onChange={(e) => {
+                                            console.log(e.target.files[0]);
+                                            handleImage(e.target.files[0]);
+                                        }}
+                                        className="edit-input"
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="profile-name">{profile.name}</h1>
+                                    <p className="profile-subtext">{profile.genderIdentity}</p>
+                                    <p className="profile-occupation">{profile.occupation}</p>
+                                </>
+                            )}
+                        </div>) : (
+                        <div className="header-text">
+                            <h1 className="profile-name">{profile.name}</h1>
+                            <p className="profile-subtext">{profile.genderIdentity}</p>
+                            <p className="profile-occupation">{profile.occupation}</p>
+                        </div>
+                    )}
+                    {user.id === Number(profileId) ? (isEditingDetails ? (
+                        <button className="edit-button save-button" onClick={handleSaveDetails}>
+                            Save Details
+                        </button>
+                    ) : (
+                        <button className="edit-button" onClick={() => {
+                            console.log("edit clicked");
+                            setIsEditingDetails(true);
+                        }}
+                        >
+                            Edit Details
+                        </button>
+                    )) : (
+                        <button
+                            className="connect"
+                            onClick={handleConnectRequest}
+                            disabled={
+                                requestStatus === "pending" ||
+                                requestStatus === "connected" ||
+                                requestStatus === "accepted"
+                            }
+                        >
+                            {requestStatus === "connected" || requestStatus === "accepted" ? "Connected" : requestStatus === "pending" ? "Pending" : "Connect"}
+                        </button>
+                    )}
+                </header>
+
+                <section className="profile-section">
+                    <div className="section-header">
+                        <h2>Bio</h2>
+                        {user.id === Number(profileId) ? (isEditingBio ? (
+                            <button className="edit-button save-button" onClick={handleSaveDetails}>
+                                Save Bio
+                            </button>
+                        ) : (
+                            <button className="edit-button" onClick={() => setIsEditingBio(true)}>
+                                Edit Bio
+                            </button>
+                        )) : null}
+                    </div>
+                    {user.id === Number(profileId) ? (isEditingBio ? (
+                        <input
+                            type="text"
+                            name="bio"
+                            value={profile.bio || ""}
+                            onChange={handleInputChange}
+                            className="edit-input"
+                            placeholder="Tell us about yourself..."
+                        />
+                    ) : (
+                        <p className="bio-text">{profile.bio}</p>
+                    )) : (<p className="bio-text">{profile.bio}</p>)}
+                </section>
+
+                <section className="profile-section">
+                    <div className="section-header">
+                        <h2>Resume</h2>
+                    </div>
+                    {user.id === Number(profileId) ? (isEditingResume ? (
+                        <button className="edit-button save-button" onClick={handleSaveDetails}>
+                            Save Resume
+                        </button>
+                    ) : (
+                        <button className="edit-button" onClick={() => setIsEditingResume(true)}>
+                            Change Resume
+                        </button>
+                    )) : null}
+                    {user.id === Number(profileId) ? (isEditingResume ? (
+                        <input
+                            type="file"
+                            name="resume"
+                            onChange={(e) => setResume(e.target.files[0])}
+                            className="edit-input"
+                            accept=".pdf,.doc,.docx"
+                        />
+                    ) : (
+                        <p className="resume-text">
+                            <a 
+                                href={`http://localhost:5001${profile.resumeattached}`}
+                                target="_blank"
+                            >
+                                Resume
+                            </a>
+                        </p>
+                    )) : (<p className="resume-text">
+                        <a
+                            href={`http://localhost:5001${profile.resumeattached}`}
+                            target="_blank"
+                        >
+                            Resume
+                        </a>
+                    </p>)}
+                </section>
+                <section className="profile-section">
+                    <div className="section-header">
+                        <h2>Network</h2>
+                        <Link to="/Connections">
+                            <button className="edit-button">
+                            Manage Network
+                            </button>
+                        </Link>
+                    </div>
+                    <p>{profile.name} has {connections.length} people in their network!</p>
+                    
+                    <div className="profile-connections-grid">
+                        {connections.length > 0 ? (
+                            connections.map((conn) => (
+                                <Link key={conn.id} to={`/profile/${conn.id}`}>
+                                    <div className="mini-connection-card">
+                                        <img 
+                                            src={conn.profilePicUrl || "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"} 
+                                            alt={conn.name} 
+                                            className="connection-img"
+                                            style={{ cursor: "pointer" }}
+                                        />
+                                        <p className="connection-name">
+                                            {conn.name}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))
+                        ) : (
+                            <p className='connections-missing'>No connections to display yet.</p>
+                        )}
+                    </div>
+                </section>
+
+            </div>
+            <div className="My-TagEms">
+                {viewingPost ? (
+                    <div className="focused-post-view">
+                        <button className="edit-button"  onClick={() => setViewingPost(null)}>
+                            Head Back
+                        </button>
+
+                        <article className="tag-em-post" style={{ border: "2px solid #ccc" }}>
+                            <div className="tag-em-content">
+                                <div className="tag-em-meta">
+                                <div className="tag-em-avatar">
+                                        <img
+                                            src={image ? URL.createObjectURL(image) : profile.profilePicUrl || "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"}
+                                            alt={profile.name}
+                                        />
+                                    </div>
+                                    <strong>{profile.name}</strong>
+                                    <span className="tag-em-time">
+                                        {viewingPost.created_at ? new Date(viewingPost.created_at).toLocaleDateString() : viewingPost.timestamp}
+                                    </span>
+                                </div>
+                                <p className="With-Replies-Text">{viewingPost.content}</p>
+
+                                <div className="commentBox">
+                                    <textarea className="Reply-Box"
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        placeholder='Type your reply...'
+                                    /> 
+                                    <button onClick={() => handleCommentSubmit(viewingPost.id)} disabled={!commentText.trim()} className='edit-button'
+                                    >
+                                        Submit Reply
+                                    </button>
+                                </div>
+                                {viewingPost.comments && viewingPost.comments.length > 0 && (
+                                    <div className="post-comments-section">
+                                        <h4>Replies</h4>
+                                        {viewingPost.comments.map((comment) => (
+                                            <div key={`comment-${comment.id}`} className="comment-item">
+                                                <div className="tag-em-meta">
+                                                    <span className="tag-em-time">
+                                                        {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : "Just now"}
+                                                    </span>
+                                                </div>
+                                                <p className="tag-em-text">
+                                                    {comment.content}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </article>
+                    </div>
+
+                ) : (
+                    <> {/*not in a reply section*/}
+                    {user.id === Number(profileId) && (
+                        <div className="create-post-section">
+                            <h3>Create a Blog Post</h3>
+                            <form onSubmit={handleCreatePost}>
+                                <textarea className="Reply-Box"
+                                    value={postContent}
+                                    onChange={(e) => setPostContent(e.target.value)}
+                                    placeholder="What's on your mind?"
+                                    rows="5"
+                                />
+                                {error && <p style={{ color: "orange" }}>{error}</p>}
+                                <button className="edit-button" type="submit" disabled={!postContent.trim()}>Post</button>
+                            </form>
+                        </div>
+                    )}
+                        <h3>Comment on {profile.name}'s Page!</h3>
+                        <div className="tag-ems-list"> 
+                            {tagEms.map((post, index) => (
+                                <article key={`post-${post.id}-${index}`} className="tag-em-post">
+                                    <div className="tag-em-avatar">
+                                        <img
+                                            src={image ? URL.createObjectURL(image) : profile.profilePicUrl || "https://anitawatkins.com/wp-content/uploads/2016/02/Generic-Profile-1600x1600.png"}
+                                            alt={profile.name}
+                                        />
+                                    </div>
+                                    <div className="tag-em-content">
+                                        <div className="tag-em-meta">
+                                            <strong>{profile.name}</strong>
+                                            <span className="tag-em-dot">·</span>
+                                            <span className="tag-em-time">
+                                                {post.created_at ? new Date(post.created_at).toLocaleDateString() : post.timestamp}
+                                            </span>
+                                        </div>
+                                        <p className="tag-em-text">{post.content}</p> 
+                                        
+                                        <div className="tag-em-actions">
+                                            <button 
+                                                className="action-btn reply-btn"
+                                                onClick={() => handleViewPost(post.id)}
+                                            >
+                                                See People's Thoughts
+                                            </button>
+                                            <button className="action-btn like-btn"
+                                            onClick={() => handleLike(post.id)}
+                                            >
+                                                ❤️  -- {post.likes_count || post.likes || 0}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default ProfilePage;

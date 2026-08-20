@@ -1,0 +1,272 @@
+.profile-page {
+  display: flex;
+  flex-direction: row;
+  align-items: left;
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+.profile-container {
+  padding: 20px;
+  margin: 1rem;
+  font-family: system-ui, sans-serif;
+  color: #333;
+  justify-content: left;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.profile-header {
+  max-height: 162px;
+  min-height: 162px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.profile-pic {
+  min-width: 120px;
+  max-width: 120px;
+  min-height: 120px;
+  max-height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #eee;
+}
+
+.header-text {
+  flex-grow: 1;
+}
+
+.profile-name {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+}
+
+.profile-subtext {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.profile-occupation {
+  margin: 8px 0 0 0;
+  font-weight: 600;
+}
+
+.profile-section {
+  margin-top: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+.section-header h2 {
+  margin-bottom: 4px;
+}
+
+.bio-text {
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
+.edit-button {
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.edit-button:hover {
+  background-color: #e4e4e4;
+}
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.save-button {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.save-button:hover {
+  background-color: #333;
+}
+
+/* TagEms Feed Styles*/
+.My-TagEms {
+  margin-left: 20px;
+  padding-right: 5%;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 650px;
+}
+.post-comments-section{
+  margin-top: 18px;
+  border-Top: 1px solid #eee;
+  padding-top: 15px;
+}
+.tag-ems-section {
+  margin-top: 40px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  background-color: #fff;
+}
+h4{
+margin-bottom: 9px;
+}
+.feed-header {
+  padding: 16px 20px;
+  margin: 0;
+  font-size: 20px;
+  border-bottom: 1px 
+}
+
+.tag-em-post {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eaeaea;
+  gap: 12px;
+}
+
+.tag-em-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #eee;
+}
+
+.tag-em-content {
+  flex-grow: 1;
+}
+.commentBox{
+  margin-top: 15px;
+}
+.comment-item{
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+.tag-em-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+
+.tag-em-text {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #0f1419;
+}
+.With-Replies-Text{
+font-size: 1.3em;
+}
+.Reply-Box{
+  width:90%;
+  font-size: 12pt;
+  padding: 10px;
+  border-radius: 5px;
+}
+.tag-em-actions {
+  display: flex;
+  justify-content: space-between;
+  max-width: 350px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: #536471;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.action-btn:hover {
+  color: #1d9bf0;
+}
+
+.connect{
+  background-color: #1d9bf0;
+  border-color: #1d9bf0;
+  border: 2px solid #1d9bf0;
+  border-radius: 9999px;
+  cursor: pointer;
+  padding: 8px 20px;
+  color: white;
+}
+
+.connect:hover{
+  background-color: blue;
+}
+.profile-connections-grid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.mini-connection-card {
+    text-align: center;
+    width: 80px;
+}
+
+.connection-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    cursor: pointer;
+}
+
+.connection-name {
+    font-size: 0.85em;
+    margin: 5px 0 0 0;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.connections-missing{
+  color:#536471;
+  font-style: italic;
+}

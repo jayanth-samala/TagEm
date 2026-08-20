@@ -1,0 +1,123 @@
+.meetups-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
+}
+
+.meetups-page h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #222;
+}
+
+.filters {
+  display: flex;
+  gap: 15px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filters input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.filters input:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
+.meetup-list {
+  display: grid;
+  gap: 20px;
+}
+
+.meetup-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.meetup-card h2 {
+  margin-top: 0;
+  color: #0077ff;
+}
+
+.meetup-card p {
+  margin: 8px 0;
+  color: #333;
+}
+
+.no-meetups {
+  text-align: center;
+  color: gray;
+}
+
+.create-meetup-section {
+  margin-top: 40px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.create-meetup-section h2 {
+  margin-top: 0;
+  color: #222;
+}
+
+.create-meetup-form {
+  display: grid;
+  gap: 15px;
+}
+
+.create-meetup-form input,
+.create-meetup-form textarea {
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.create-meetup-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.create-meetup-form input:focus,
+.create-meetup-form textarea:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
+.create-meetup-form button {
+  padding: 12px;
+  font-size: 16px;
+  background-color: #0077ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.create-meetup-form button:hover {
+  background-color: #005fcc;
+}
+
+.meetup-card-link {
+  text-decoration: none;
+  color: inherit;
+}
