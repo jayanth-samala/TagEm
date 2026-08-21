@@ -109,11 +109,6 @@ npm --prefix frontend run build</code></pre>
   and deployment verification.
 </p>
 
-<p>
-  Do not place credentials, database URLs, OAuth secrets, JWT secrets, or Blob
-  tokens in this README or commit them to the repository.
-</p>
-
 <h1>Tools Used</h1>
 
 <h3>Frontend Development</h3>
