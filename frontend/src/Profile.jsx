@@ -759,7 +759,7 @@ console.error("Error liking post:", err);
                                             <button className="action-btn like-btn"
                                             onClick={() => handleLike(post.id)}
                                             >
-                                                ❤️  -- {post.likes_count || post.likes || 0}
+                                                ❤️ <span className="like-count">{post.likes_count || post.likes || 0}</span>
                                             </button>
                                         </div>
                                     </div>

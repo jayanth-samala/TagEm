@@ -130,7 +130,7 @@
 .edit-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .edit-input {
@@ -195,7 +195,7 @@ margin-bottom: 9px;
   display: flex;
   padding: 16px 20px;
   border-bottom: 1px solid #eaeaea;
-  gap: 12px;
+  gap: 8px;
 }
 
 .tag-em-avatar img {
@@ -291,6 +291,23 @@ font-size: 1.3em;
 .action-btn:hover {
   color: white;
   background: #0077ff;
+}
+
+.like-btn {
+  color: #e25555;
+  border-color: #e25555;
+  gap: 12px;
+}
+
+.like-btn:hover,
+.like-btn:active {
+  color: #e25555;
+  background: #fde8e8;
+  border-color: #e25555;
+}
+
+.like-count {
+  color: #111;
 }
 
 .connect{
