@@ -298,8 +298,10 @@ font-size: 1.3em;
 }
 .tag-em-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 350px;
+  gap: 8px;
+  max-width: 500px;
 }
 
 .action-btn {
@@ -333,8 +335,39 @@ font-size: 1.3em;
   border-color: #e25555;
 }
 
+.like-btn.liked {
+  background: #fde8e8;
+}
+
 .like-count {
   color: #111;
+}
+
+.delete-post-button {
+  padding: 8px 10px;
+  color: #b42318;
+  background: #fff;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.delete-post-button:hover {
+  color: #fff;
+  background: #b42318;
+}
+
+.delete-post-button:focus-visible {
+  outline: 3px solid rgba(180, 35, 24, 0.25);
+  outline-offset: 2px;
+}
+
+.post-message {
+  margin: 0 0 12px;
+  color: #555;
+  font-size: 14px;
 }
 
 .connect{

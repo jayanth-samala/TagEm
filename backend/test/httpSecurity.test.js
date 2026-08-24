@@ -173,6 +173,58 @@ test("post HTTP route rejects malformed and nested reply parents", async () => {
   }
 });
 
+test("post deletion is limited to the authenticated owner", async () => {
+  const originalQuery = pool.query;
+  let deleteQuery;
+  pool.query = async (sql, parameters = []) => {
+    deleteQuery = { sql: String(sql), parameters };
+    return { rows: [] };
+  };
+  try {
+    const response = await request(routeApp(postsRoutes, { id: 7, is_admin: false }), "/42", {
+      method: "DELETE",
+    });
+    assert.equal(response.status, 404);
+    assert.match(deleteQuery.sql, /user_id = \$2/);
+    assert.match(deleteQuery.sql, /parent_post_id IS NULL/);
+    assert.deepEqual(deleteQuery.parameters, [42, 7]);
+  } finally {
+    pool.query = originalQuery;
+  }
+});
+
+test("liking an already-liked post removes the authenticated user's like", async () => {
+  const originalConnect = pool.connect;
+  const queries = [];
+  const client = {
+    async query(sql, parameters = []) {
+      const text = String(sql);
+      queries.push({ sql: text, parameters });
+      if (text.includes("DELETE FROM post_likes")) return { rows: [{ post_id: 42 }] };
+      if (text.includes("UPDATE posts")) return { rows: [{ id: 42, likes_count: 0 }] };
+      return { rows: [] };
+    },
+    release() {},
+  };
+  pool.connect = async () => client;
+  try {
+    const response = await request(routeApp(postsRoutes, { id: 7, is_admin: false }), "/42/like", {
+      method: "PUT",
+    });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.liked_by_user, false);
+    assert.equal(body.likes_count, 0);
+    assert.ok(queries.some(({ sql, parameters }) =>
+      sql.includes("DELETE FROM post_likes") && parameters[0] === 42 && parameters[1] === 7
+    ));
+    assert.equal(queries.some(({ sql }) => sql.includes("INSERT INTO post_likes")), false);
+    assert.ok(queries.some(({ sql }) => sql === "COMMIT"));
+  } finally {
+    pool.connect = originalConnect;
+  }
+});
+
 test("connection HTTP route rejects an existing pending pair", async () => {
   const originalQuery = pool.query;
   pool.query = async () => ({ rows: [] });

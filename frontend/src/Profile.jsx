@@ -43,6 +43,7 @@ const ProfilePage = () => {
     const [editedConnectionTag, setEditedConnectionTag] = useState("");
     const [tagMessage, setTagMessage] = useState("");
     const [postContent, setPostContent] = useState("");
+    const [postMessage, setPostMessage] = useState("");
     const [, setActiveCommentPostId] = useState(null);
     const [commentText, setCommentText] = useState("");
     const [viewingPost, setViewingPost] = useState(null);
@@ -178,7 +179,11 @@ const ProfilePage = () => {
         if (response.ok){
                 const updatedPost = await response.json();
                 setTagEms(prevPosts => prevPosts.map(post => 
-                        post.id === postId ? {...post, likes_count: updatedPost.likes_count} : post
+                        post.id === postId ? {
+                            ...post,
+                            likes_count: updatedPost.likes_count,
+                            liked_by_user: updatedPost.liked_by_user
+                        } : post
                     ));
             }
         }
@@ -187,6 +192,28 @@ const ProfilePage = () => {
 console.error("Error liking post:", err);
 
         }    }
+    const handleDeletePost = async (postId) => {
+        if (!window.confirm("Delete this post and all of its replies? This cannot be undone.")) return;
+
+        setPostMessage("");
+        try {
+            const response = await fetch(`http://localhost:5001/api/posts/${postId}`, {
+                method: "DELETE"
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                setPostMessage(data.message || "Unable to delete post");
+                return;
+            }
+
+            setTagEms((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+            if (viewingPost?.id === postId) setViewingPost(null);
+            setPostMessage("Post deleted.");
+        } catch (error) {
+            console.error("Error deleting post:", error);
+            setPostMessage("Unable to delete post");
+        }
+    };
     const handleSaveDetails = async () => {
         console.log("BUTTON CLICKED");
         const formData = new FormData();
@@ -712,6 +739,16 @@ console.error("Error liking post:", err);
                                 </div>
                                 <p className="With-Replies-Text">{viewingPost.content}</p>
 
+                                {Number(viewingPost.user_id) === Number(user.id) && (
+                                    <button
+                                        type="button"
+                                        className="delete-post-button"
+                                        onClick={() => handleDeletePost(viewingPost.id)}
+                                    >
+                                        Delete Post
+                                    </button>
+                                )}
+
                                 <div className="commentBox">
                                     <textarea className="Reply-Box"
                                         value={commentText}
@@ -772,6 +809,7 @@ console.error("Error liking post:", err);
                         </div>
                     )}
                         <h3>{tagEms.length > 0 ? "Posts" : `${profile.name} has no current Posts`}</h3>
+                        {postMessage && <p className="post-message" role="status">{postMessage}</p>}
                         <div className="tag-ems-list"> 
                             {tagEms.map((post, index) => (
                                 <article key={`post-${post.id}-${index}`} className="tag-em-post">
@@ -798,11 +836,23 @@ console.error("Error liking post:", err);
                                             >
                                                 See People's Thoughts
                                             </button>
-                                            <button className="action-btn like-btn"
+                                            <button
+                                            className={`action-btn like-btn${post.liked_by_user ? " liked" : ""}`}
                                             onClick={() => handleLike(post.id)}
+                                            aria-pressed={Boolean(post.liked_by_user)}
+                                            aria-label={`${post.liked_by_user ? "Unlike" : "Like"} post`}
                                             >
                                                 ❤️ <span className="like-count">{post.likes_count || post.likes || 0}</span>
                                             </button>
+                                            {Number(post.user_id) === Number(user.id) && (
+                                                <button
+                                                    type="button"
+                                                    className="action-btn delete-post-button"
+                                                    onClick={() => handleDeletePost(post.id)}
+                                                >
+                                                    Delete Post
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </article>
