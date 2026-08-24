@@ -33,6 +33,27 @@
 
 <h1>Feature List</h1>
 
+<table>
+  <thead>
+    <tr>
+      <th>Jobs Page</th>
+      <th>Meetups Page</th>
+      <th>Connections Page</th>
+      <th>Profile Page</th>
+      <th>Admin Page</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><img src="./docs/images/Jobs.png" alt="Jobs page" width="640"></td>
+      <td><img src="./docs/images/Meetups.png" alt="Meetups page" width="640"></td>
+      <td><img src="./docs/images/Connections.png" alt="Connections page" width="640"></td>
+      <td><img src="./docs/images/Profile.png" alt="Profile page" width="640"></td>
+      <td><img src="./docs/images/Admin.png" alt="Admin page" width="640"></td>
+    </tr>
+  </tbody>
+</table>
+
 <ul>
   <li>Email/password and Google OAuth authentication.</li>
   <li>Editable profiles with profile pictures, bios, occupations, and private resumes.</li>

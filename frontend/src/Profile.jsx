@@ -34,6 +34,8 @@ const ProfilePage = () => {
     const [isEditingResume, setIsEditingResume] = useState(false);
     const [image, handleImage] = useState(null);
     const [resume, setResume] = useState(null);
+    const [isRemovingResume, setIsRemovingResume] = useState(false);
+    const [resumeMessage, setResumeMessage] = useState("");
     const [requestStatus, setRequestStatus] = useState("connect");
     const [connectionTags, setConnectionTags] = useState([]);
     const [newConnectionTag, setNewConnectionTag] = useState("");
@@ -231,6 +233,32 @@ console.error("Error liking post:", err);
         console.log("FETCHED PROFILE:", data);
         console.log(profile);
     }
+    const handleChangeResume = async () => {
+        if (!window.confirm("Remove your current resume and upload a replacement?")) return;
+
+        setIsRemovingResume(true);
+        setResumeMessage("");
+        try {
+            const response = await fetch(`http://localhost:5001/api/Profile/${profileId}/resume`, {
+                method: "DELETE"
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                setResumeMessage(data.message || "Unable to remove resume");
+                return;
+            }
+
+            setProfile((currentProfile) => ({ ...currentProfile, resumeattached: null }));
+            setResume(null);
+            setIsEditingResume(true);
+            setResumeMessage("Current resume removed. Choose a replacement.");
+        } catch (error) {
+            console.error("Error removing resume:", error);
+            setResumeMessage("Unable to remove resume");
+        } finally {
+            setIsRemovingResume(false);
+        }
+    };
     const handleCommentSubmit = async (postId) => {
         if (!commentText.trim()) return;
 
@@ -443,11 +471,15 @@ console.error("Error liking post:", err);
                                         }}
                                         className="edit-input"
                                     />
-                                </div>
+                            </div>
                         ) : (
                             <>
-                            <h1 className="profile-name">{profile.name}</h1>
-                            <p className="profile-subtext">{profile.genderIdentity}</p>
+                            <div className="profile-name-row">
+                                <h1 className="profile-name">{profile.name}</h1>
+                                {profile.genderIdentity && (
+                                    <p className="profile-subtext">{profile.genderIdentity}</p>
+                                )}
+                            </div>
                             <p className="profile-occupation">{profile.occupation}</p>
                             </>
                         )}
@@ -537,9 +569,19 @@ console.error("Error liking post:", err);
                                     </a>
                                 </p>
                             ) : <p className="resume-text">No resume uploaded</p>}
-                            <button className="edit-button section-bottom-action" onClick={() => setIsEditingResume(true)}>
-                                {profile.resumeattached ? "Change Resume" : "Upload Resume"}
-                            </button>
+                            <div className="resume-actions section-bottom-action">
+                                <button className="edit-button" disabled={isRemovingResume} onClick={() => {
+                                    setResumeMessage("");
+                                    if (profile.resumeattached) {
+                                        handleChangeResume();
+                                    } else {
+                                        setIsEditingResume(true);
+                                    }
+                                }}>
+                                    {isRemovingResume ? "Removing..." : profile.resumeattached ? "Change Resume" : "Upload Resume"}
+                                </button>
+                            </div>
+                            {resumeMessage && <p className="resume-message" role="status">{resumeMessage}</p>}
                         </>
                     )) : null}
                 </section>

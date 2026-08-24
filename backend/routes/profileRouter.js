@@ -1,5 +1,5 @@
 import express from "express";
-import {updateProfile, showProfile} from "../controllers/profileController.js";
+import { removeResume, showProfile, updateProfile } from "../controllers/profileController.js";
 import multer from "multer";
 import { sendProfileFile } from "../controllers/profileController.js";
 import { isResourceOwner } from "../utils/authorization.js";
@@ -60,6 +60,7 @@ router.put("/:id", requireSelf, uploadRateLimit, upload.fields([
   ]), verifyFileSignatures, updateProfile);
 router.get("/:id/image", sendProfileFile("image"));
 router.get("/:id/resume", sendProfileFile("resume"));
+router.delete("/:id/resume", requireSelf, removeResume);
 router.get("/:id", showProfile);
 
 router.use((error, req, res, next) => {

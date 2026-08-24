@@ -62,6 +62,17 @@
   color: #222;
 }
 
+.profile-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.profile-name-row .profile-name {
+  margin-bottom: 0;
+}
+
 .profile-subtext {
   margin: 0;
   color: #666;
@@ -72,7 +83,7 @@
 
 .profile-occupation {
   margin: 8px 0 0 0;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 19px;
   min-height: 19px;
 }
@@ -89,6 +100,22 @@
 .section-bottom-link {
   display: block;
   text-decoration: none;
+}
+
+.resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resume-actions .edit-button {
+  margin-bottom: 0;
+}
+
+.resume-message {
+  margin: 10px 0 0;
+  color: #555;
+  font-size: 14px;
 }
 
 .section-header {
@@ -296,7 +323,7 @@ font-size: 1.3em;
 .like-btn {
   color: #e25555;
   border-color: #e25555;
-  gap: 12px;
+  gap: 6px;
 }
 
 .like-btn:hover,

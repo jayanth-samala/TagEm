@@ -68,6 +68,53 @@ export async function showProfile(req, res){
     }
 }
 
+export async function removeResume(req, res) {
+    const id = req.user.id;
+    let client;
+    let resumeReference = null;
+
+    try {
+        client = await pool.connect();
+        await client.query("BEGIN");
+
+        const existing = await client.query(
+          `SELECT resumeattached
+           FROM users
+           WHERE id = $1
+           FOR UPDATE`,
+          [id]
+        );
+
+        if (existing.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        resumeReference = existing.rows[0].resumeattached;
+        await client.query(
+          "UPDATE users SET resumeattached = NULL WHERE id = $1",
+          [id]
+        );
+        await client.query("COMMIT");
+
+        if (resumeReference) {
+            try {
+                await deleteStoredFile(resumeReference);
+            } catch (error) {
+                console.error("Unable to delete removed resume file:", error);
+            }
+        }
+
+        return res.json({ message: "Resume removed", resumeattached: null });
+    } catch (error) {
+        if (client) await client.query("ROLLBACK").catch(() => {});
+        console.error("Remove resume error:", error);
+        return res.status(500).json({ message: "Unable to remove resume" });
+    } finally {
+        client?.release();
+    }
+}
+
 export function sendProfileFile(kind) {
     return async (req, res) => {
         const userId = Number(req.params.id);
