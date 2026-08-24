@@ -34,22 +34,28 @@
 <h1>Feature List</h1>
 
 <table>
-  <thead>
+  <tbody>
     <tr>
       <th>Jobs Page</th>
       <th>Meetups Page</th>
+    </tr>
+    <tr>
+      <td><img src="./docs/images/Jobs.png" alt="Jobs page" width="380"></td>
+      <td><img src="./docs/images/Meetups.png" alt="Meetups page" width="380"></td>
+    </tr>
+    <tr>
       <th>Connections Page</th>
       <th>Profile Page</th>
-      <th>Admin Page</th>
     </tr>
-  </thead>
-  <tbody>
     <tr>
-      <td><img src="./docs/images/Jobs.png" alt="Jobs page" width="640"></td>
-      <td><img src="./docs/images/Meetups.png" alt="Meetups page" width="640"></td>
-      <td><img src="./docs/images/Connections.png" alt="Connections page" width="640"></td>
-      <td><img src="./docs/images/Profile.png" alt="Profile page" width="640"></td>
-      <td><img src="./docs/images/Admin.png" alt="Admin page" width="640"></td>
+      <td><img src="./docs/images/Connections.png" alt="Connections page" width="380"></td>
+      <td><img src="./docs/images/Profile.png" alt="Profile page" width="380"></td>
+    </tr>
+    <tr>
+      <th colspan="2">Admin Page</th>
+    </tr>
+    <tr>
+      <td colspan="2" align="center"><img src="./docs/images/Admin.png" alt="Admin page" width="680"></td>
     </tr>
   </tbody>
 </table>
