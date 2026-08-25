@@ -511,23 +511,23 @@ font-size: 1.3em;
 
 .danger-zone {
   padding: 16px;
-  border: 1px solid #e4a6a1;
+  border: 1px solid #ddd;
   border-radius: 10px;
-  background: #fff8f7;
+  background: #fff;
 }
 
 .danger-zone .section-header {
-  border-bottom-color: #e4a6a1;
+  border-bottom-color: #eaeaea;
 }
 
 .danger-zone .section-header h2 {
-  color: #a92b22;
+  color: #222;
 }
 
 .delete-account-button {
   padding: 10px 12px;
   color: #fff;
-  background: #c9362b;
+  background: #0077ff;
   border: none;
   border-radius: 8px;
   font-family: Arial, sans-serif;
@@ -536,11 +536,11 @@ font-size: 1.3em;
 }
 
 .delete-account-button:hover {
-  background: #a92b22;
+  background: #005fcc;
 }
 
 .delete-account-button:focus-visible {
-  outline: 3px solid rgba(201, 54, 43, 0.25);
+  outline: 3px solid rgba(0, 119, 255, 0.25);
   outline-offset: 2px;
 }
 
