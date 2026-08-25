@@ -164,7 +164,7 @@ export default function Jobs() {
                   onChange={() => handleUserChange(connection.id)}
                 />
                 {connection.name}
-                {connection.tag_type && ` (${connection.tag_type})`}
+                {connection.tags?.length > 0 && ` (${connection.tags.join(", ")})`}
               </label>
             ))}
           </div>

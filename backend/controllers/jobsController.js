@@ -156,7 +156,11 @@ export async function getJobSendOptions(req, res) {
         u.id,
         u.name,
         u."profilePicUrl",
-        ct.tag_type
+        COALESCE(
+          ARRAY_AGG(DISTINCT ct.tag_type ORDER BY ct.tag_type)
+            FILTER (WHERE ct.tag_type IS NOT NULL),
+          ARRAY[]::varchar[]
+        ) AS tags
       FROM connections c
       JOIN users u
         ON u.id = CASE
@@ -167,6 +171,7 @@ export async function getJobSendOptions(req, res) {
         ON ct.owner_id = $1
        AND ct.connection_user_id = u.id
       WHERE c.user1_id = $1 OR c.user2_id = $1
+      GROUP BY u.id, u.name, u."profilePicUrl"
       ORDER BY u.name
       `,
       [userId]
